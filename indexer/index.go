@@ -67,27 +67,40 @@ func (i *Index) Add(word string, doc *Document) {
 
 func (i *Index) Find(keyId int) []*Document {
 	i.btLock.Lock()
+	defer i.btLock.Unlock()
+
 	item := i.getRecord(keyId)
 	if item != nil {
-		i.btLock.Unlock()
 		record := item.(*DocumentRecords)
-		return record.documents
+		if !record.storge {
+			return record.documents
+		}
 	}
-	i.btLock.Unlock()
 
 	return nil
 }
 
 func (i *Index) Del(keyId int) *DocumentRecords {
 	i.btLock.Lock()
+	defer i.btLock.Unlock()
+
 	item := i.delRecord(keyId)
 	if item != nil {
-		i.btLock.Unlock()
 		return item.(*DocumentRecords)
 	}
-	i.btLock.Unlock()
 
 	return nil
+}
+
+func (i *Index) UpateStorageStatus(keyId int, status bool) {
+	i.btLock.Lock()
+	defer i.btLock.Unlock()
+
+	item := i.getRecord(keyId)
+	if item != nil {
+		docRecord := item.(*DocumentRecords)
+		docRecord.storge = status
+	}
 }
 
 func (i *Index) addRecord(word string, doc *Document) {
@@ -145,6 +158,20 @@ func (i *Index) getRecord(keyId int) btree.Item {
 	item := i.btLock.bt.Get(&DocumentRecords{keyId:keyId})
 
 	return item
+}
+
+func (i *Index) ForeachRecord() (outRecords []map[string][]*Document) {
+	outRecords = make([]map[string][]*Document, 0)
+	i.btLock.bt.Descend(func(i btree.Item) bool {
+		outRecord := make(map[string][]*Document)
+		v := i.(*DocumentRecords)
+		outRecord[v.keyword] = v.documents
+		outRecords = append(outRecords, outRecord)
+
+		return true
+	})
+
+	return outRecords
 }
 
 func (i *Index) CreateDocument(docId, docType int, wordsNum float32, words []string, content string) *Document {

@@ -5,6 +5,10 @@ import (
 	"sync"
 	"nsearch/constant"
 	"nsearch/utils"
+	"strings"
+	"bytes"
+	"encoding/gob"
+	"fmt"
 )
 
 //索引器工作协程
@@ -34,10 +38,13 @@ type IndexerRequest struct {
 }
 
 type SearchRequest struct {
-	QueryId    int         //查询id
-	Query      string      //查询短语
-	WordsNum   float32     //查询分词数量
-	Words      []string    //查询分词
+	QueryId        int               //查询id
+	Query          string            //查询短语
+	WordsNum       float32           //查询分词数量
+	Words          []string          //查询分词
+	WordsRecords   map[string][]byte //持久层中的记录
+	Page           int
+	Limit          int
 }
 
 type SearchRespone struct {
@@ -90,7 +97,7 @@ func (ier *IndexWorker) AddIndex() {
 				if wsi != nil {
 					//fmt.Println("add index word:", wsi[0])
 					//fmt.Println("add index content:", request.Content)
-					ier.index.Add(wsi[0], document)
+					ier.index.Add(strings.TrimSpace(wsi[0]), document)
 				}
 			}
 		}
@@ -105,18 +112,47 @@ func (ier *IndexWorker) FindIndex() {
 			allDocuments := make([][]*Document, len(request.Words))
 			allWordDocuments := make(map[string][]*Document, len(request.Words))
 			wordDocNum   := make(map[string]float32, len(request.Words))
+
 			for k, word := range request.Words {
+				//index索引中的记录
 				keyId := utils.GetKeysId(word)
-				documents := ier.index.Find(keyId)
-				if documents != nil {
-					allDocuments[k] = documents
-					allWordDocuments[word] = documents
-					wordDocNum[word] = float32(len(documents))
+				documents1 := ier.index.Find(keyId)
+				if documents1 != nil {
+					allDocuments[k] = documents1
+					allWordDocuments[word] = documents1
+					wordDocNum[word] = float32(len(documents1))
 				} else {
 					wordDocNum[word] = float32(0)
+					allDocuments[k] = nil
 					allWordDocuments[word] = nil
 				}
+
+				//db持久层中的记录
+				var documents2 []*Document
+				if request.WordsRecords != nil {
+					if record, exist := request.WordsRecords[word]; exist {
+						buf := bytes.NewReader(record)
+						dec := gob.NewDecoder(buf)
+						err := dec.Decode(&documents2)
+						if err == nil {
+							fmt.Println("data len", len(documents2))
+							for n, doc := range documents2 {
+								fmt.Println("n:", n, "content:", doc.Content)
+							}
+						}
+					}
+					if documents2 != nil {
+						if documents1 != nil && allDocuments[k] != nil && wordDocNum[word] > 0 {
+							allDocuments[k]  = append(allDocuments[k], documents2...)
+							wordDocNum[word] = float32(len(documents1)) + float32(len(documents2))
+						} else {
+							allDocuments[k]  = documents2
+							wordDocNum[word] = float32(len(documents2))
+						}
+					}
+				}
 			}
+
 			//for w, docs := range allWordDocuments {
 			//	fmt.Println("word:", w)
 			//	for _, doc := range docs {
@@ -129,16 +165,30 @@ func (ier *IndexWorker) FindIndex() {
 			//for k, idoc := range interDocs {
 			//	fmt.Println("k--:", k, "idoc--:", idoc.Content)
 			//}
+			pageData := pageData(interDocs, request.Page, request.Limit) //分页
+
 			ier.Srespone <- &SearchRespone {
 				QueryId    : request.QueryId,
 				Query      : request.Query,
 				WordsNum   : request.WordsNum,
 				Words      : request.Words,
 				WordDocNum : wordDocNum,
-				InterDocs  : interDocs,
+				InterDocs  : pageData,
 			}
 		}
 	}
+}
+
+func (ier *IndexWorker) UpdateStorageStatus(keyword string, status bool) {
+	keyId := utils.GetKeysId(keyword)
+	ier.index.UpateStorageStatus(keyId, status)
+}
+
+func (ier *IndexWorker) DelStorageIndex(keyword string) {
+	go func() {
+		keyId := utils.GetKeysId(keyword)
+		ier.index.Del(keyId)
+	}()
 }
 
 //获取文档的交集
@@ -196,4 +246,30 @@ func contains(a []*Document, b *Document) bool {
 	}
 
 	return false
+}
+
+func pageData (data []*Document, page, limit int) []*Document {
+	//default
+	if page == 0 {
+		page = 1
+	}
+	if limit == 0 {
+		limit = 10
+	}
+
+	var total, start, end int
+	length := len(data)
+	total = length / limit
+	if page > total {
+		start = (page - 1) * limit
+		if start > length {
+			return nil
+		}
+		end   = length
+	} else {
+		start = (page - 1) * limit
+		end   = start + limit
+	}
+
+	return data[start:end]
 }

@@ -7,10 +7,13 @@ import (
 	"nsearch/ranker"
 	"nsearch/utils"
 	"nsearch/include"
+	"nsearch/storage"
 	"sync"
 	"log"
 	"strings"
 	"fmt"
+	"bytes"
+	"encoding/gob"
 )
 
 var (
@@ -26,6 +29,7 @@ type Engine struct {
 	iworker    *indexer.IndexWorker
 	pworker    *parter.ParterWorker
 	rworker    *ranker.RankerWorker
+	sworker    *storage.StorageWorker
 }
 
 type QueryRequest struct {
@@ -48,6 +52,7 @@ func NewEngine() *Engine {
 				iworker   : indexer.NewIndexWorker(),
 				pworker   : parter.NewParterWorker(),
 				rworker   : ranker.NewRankerWorker(),
+				sworker   : storage.NewStorageWorker(constant.DB_ENGINE),
 			}
 		})
 
@@ -59,6 +64,8 @@ func NewEngine() *Engine {
 		go eng.iworker.FindIndex()
 		//运行排序器
 		go eng.rworker.DocRank()
+		//运行存储器
+		go eng.sworker.DoStorage()
 	}
 
 	return eng
@@ -123,11 +130,38 @@ func (e *Engine) FlushIndex() {
 		log.Fatal("搜索引擎必须初始化")
 	}
 
+	go func() {
+		indexDocs := e.iworker.Index().ForeachRecord()
+		indexDocsLen := len(indexDocs)
+		if indexDocsLen <= 0 {
+			return
+		} else {
+			records := make(map[string][]byte, indexDocsLen)
+			for _, keydoc := range indexDocs {
+				for key, doc := range keydoc {
+					//更新记录持久存储的状态为true
+					e.iworker.UpdateStorageStatus(key, true)
 
+					//从btree中删除持久存储状态为true的记录
+					e.iworker.DelStorageIndex(key)
+
+					//gob encode
+					var value bytes.Buffer
+					enc := gob.NewEncoder(&value)
+					err := enc.Encode(doc)
+					if err == nil {
+						records[key] = value.Bytes()
+					}
+				}
+			}
+
+			e.sworker.Record <- records
+		}
+	}()
 }
 
 //搜索
-func (e *Engine) NSearch(query string, retCall RetCall) {
+func (e *Engine) NSearch(query string, page, limit int, retCall RetCall) {
 	if !e.inited {
 		log.Fatal("搜索引擎必须初始化")
 		return
@@ -139,7 +173,7 @@ func (e *Engine) NSearch(query string, retCall RetCall) {
 	}
 
 	//搜索查询请求
-	queryReq := &QueryRequest{
+	queryReq := &QueryRequest {
 		query   : query,
 		retCall : retCall,
 	}
@@ -157,25 +191,34 @@ func (e *Engine) NSearch(query string, retCall RetCall) {
 				wordsNum := len(words)
 				if wordsNum > 0 {
 					var (
-						qid      int
-						useWords []string
+						qid             int
+						useWords        []string
 					)
+					wordsRecords := make(map[string][]byte)
 					for _, word := range words {
 						if len(word) != 0 && !e.stopWords.StopWordsExist(word) {
 							useWords = append(useWords, word)
+							//查询持久层记录
+							record, err := e.sworker.Istorage.GetData([]byte(word))
+							if err == nil {
+								wordsRecords[word] = record
+							}
 						}
 					}
 
 					qid = utils.GetKeysId(useWords...)
 					e.iworker.Srequest <- &indexer.SearchRequest {
-						QueryId  : qid,
-						Query    : query,
-						WordsNum : float32(wordsNum),
-						Words    : useWords,
+						QueryId      : qid,
+						Query        : query,
+						WordsNum     : float32(wordsNum),
+						Words        : useWords,
+						WordsRecords : wordsRecords,
+						Page         : page,
+						Limit        : limit,
 					}
 
 					sresponse := <- e.iworker.Srespone
-					if len(sresponse.InterDocs) > 0 {
+					if sresponse.InterDocs != nil && len(sresponse.InterDocs) > 0 {
 						if sresponse != nil && qid == sresponse.QueryId {
 							e.rworker.Rank().DocAllNum = e.iworker.Index().DocAllNum
 							e.rworker.Rank().DocAllWordsNum = e.iworker.Index().DocAllWordsNum
