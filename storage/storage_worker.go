@@ -3,6 +3,9 @@ package storage
 import (
 	"sync"
 	"nsearch/constant"
+	"nsearch/indexer"
+	"bytes"
+	"encoding/gob"
 )
 
 const (
@@ -75,9 +78,28 @@ func (sw *StorageWorker) DoStorage() {
 		if len(justdoit) > 0 {
 			for k, v := range justdoit {
 				record, err := sw.Istorage.GetData([]byte(k))
-				if err == nil {
-					nv := append(v, record...) //merge
-					sw.Istorage.AddData([]byte(k), nv)
+				if len(record) > 0 && err == nil {
+					var documents1 []*indexer.Document
+					buf := bytes.NewReader(v)
+					dec := gob.NewDecoder(buf)
+					err = dec.Decode(&documents1)
+					if err == nil {
+						var documents2 []*indexer.Document
+						buf2 := bytes.NewReader(record)
+						dec2 := gob.NewDecoder(buf2)
+						err = dec2.Decode(&documents2)
+						if err == nil {
+							docs := append(documents1, documents2...) //merge documents
+
+							//gob encode
+							var value bytes.Buffer
+							enc := gob.NewEncoder(&value)
+							err = enc.Encode(docs)
+							if err == nil {
+								sw.Istorage.AddData([]byte(k), value.Bytes())
+							}
+						}
+					}
 				} else {
 					sw.Istorage.AddData([]byte(k), v)
 				}
