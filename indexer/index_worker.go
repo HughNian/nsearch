@@ -162,7 +162,7 @@ func (ier *IndexWorker) FindIndex() {
 
 			var pData []*Document
 			if allDocuments != nil {
-				interDocs := getDocIntersect(allDocuments)
+				interDocs := getDocIntersect(allDocuments, request.Mode)
 				pData = pageData(interDocs, request.Page, request.Limit) //分页
 			}
 
@@ -191,7 +191,7 @@ func (ier *IndexWorker) DelStorageIndex(keyword string) {
 }
 
 //获取文档的交集
-func getDocIntersect(all [][]*Document) []*Document {
+func getDocIntersect(all [][]*Document, mode int) []*Document {
 	l := len(all)
 	if l == 0 {
 		return nil
@@ -204,14 +204,23 @@ func getDocIntersect(all [][]*Document) []*Document {
 	for n := 0; n < l; n++ {
 		if n == 1 {
 			doc = getIntersect(all[0], all[1])
+
 			if len(doc) == 0 && l != 2 {
-				doc = all[1]
+				if mode != 1 {
+					return nil
+				} else {
+					doc = all[1]
+				}
 			}
-		} else {
+		} else if n > 1 {
 			doc2 := doc
 			doc = getIntersect(doc, all[n])
 			if len(doc) == 0 {
-				doc = doc2
+				if mode != 1 {
+					return nil
+				} else {
+					doc = doc2
+				}
 			}
 		}
 	}
@@ -248,6 +257,10 @@ func contains(a []*Document, b *Document) bool {
 }
 
 func pageData (data []*Document, page, limit int) []*Document {
+	if data == nil || len(data) == 0 {
+		return nil
+	}
+
 	//default
 	if page == 0 {
 		page = 1
