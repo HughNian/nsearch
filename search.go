@@ -49,8 +49,11 @@ func NSearch(job wor.Job) ([]byte, error) {
 
 	resultData := make(chan []byte)
 	query := resp.StrParams[0]
+	mode, _  := strconv.ParseInt(resp.StrParams[1], 10, 64)
+	page, _  := strconv.ParseInt(resp.StrParams[2], 10, 64)
+	limit, _ := strconv.ParseInt(resp.StrParams[3], 10, 64)
 	retStruct := wor.GetRetStruct()
-	sengine.NSearch(query, func(result []*include.RetDocument) (ret []byte, err error) {
+	sengine.NSearch(query, int(mode), int(page), int(limit), func(result []*include.RetDocument) (ret []byte, err error) {
 		if result != nil && len(result) != 0 {
 			data, err := json.Marshal(result)
 			if err == nil {
@@ -88,6 +91,28 @@ func NSearch(job wor.Job) ([]byte, error) {
 	return returnData, nil
 }
 
+func FlushIndex(job wor.Job) ([]byte, error) {
+	resp := job.GetResponse()
+	if nil == resp {
+		return []byte(``), fmt.Errorf("response data error")
+	}
+
+	sengine.FlushIndex()
+
+	retStruct := wor.GetRetStruct()
+	retStruct.Msg = "flush index ok"
+	retStruct.Data = []byte(``)
+	ret, err := msgpack.Marshal(retStruct)
+	if nil != err {
+		return []byte(``), err
+	}
+
+	resp.RetLen = uint32(len(ret))
+	resp.Ret = ret
+
+	return ret, nil
+}
+
 func main() {
 	var worker *wor.Worker
 	var err error
@@ -104,6 +129,7 @@ func main() {
 	if sengine != nil {
 		worker.AddFunction("IndexDoc", IndexDocment)
 		worker.AddFunction("NSearch", NSearch)
+		worker.AddFunction("FlushIndex", FlushIndex)
 	}
 
 	if err = worker.WorkerReady(); err != nil {

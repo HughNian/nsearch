@@ -161,7 +161,7 @@ func (e *Engine) FlushIndex() {
 }
 
 //搜索
-func (e *Engine) NSearch(query string, page, limit int, retCall RetCall) {
+func (e *Engine) NSearch(query string, mode, page, limit int, retCall RetCall) {
 	if !e.inited {
 		log.Fatal("搜索引擎必须初始化")
 		return
@@ -213,6 +213,7 @@ func (e *Engine) NSearch(query string, page, limit int, retCall RetCall) {
 						WordsNum     : float32(wordsNum),
 						Words        : useWords,
 						WordsRecords : wordsRecords,
+						Mode         : mode,
 						Page         : page,
 						Limit        : limit,
 					}

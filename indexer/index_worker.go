@@ -43,6 +43,7 @@ type SearchRequest struct {
 	WordsNum       float32           //查询分词数量
 	Words          []string          //查询分词
 	WordsRecords   map[string][]byte //持久层中的记录
+	Mode           int               //搜索模式，1-模糊搜索，只要有一个词匹配就可以，默认为模糊搜索，2-精确搜索，只要有一个词不配就不没结果
 	Page           int
 	Limit          int
 }
@@ -151,21 +152,19 @@ func (ier *IndexWorker) FindIndex() {
 						}
 					}
 				}
+
+				//搜索模式处理
+				if request.Mode != 1 && documents1 == nil && documents1 == nil {
+					allDocuments = nil
+					break
+				}
 			}
 
-			//for w, docs := range allWordDocuments {
-			//	fmt.Println("word:", w)
-			//	for _, doc := range docs {
-			//		fmt.Println("content:", doc.Content)
-			//	}
-			//	fmt.Printf("\n\n")
-			//}
-
-			interDocs := getDocIntersect(allDocuments)
-			//for k, idoc := range interDocs {
-			//	fmt.Println("k--:", k, "idoc--:", idoc.Content)
-			//}
-			pageData := pageData(interDocs, request.Page, request.Limit) //分页
+			var pData []*Document
+			if allDocuments != nil {
+				interDocs := getDocIntersect(allDocuments)
+				pData = pageData(interDocs, request.Page, request.Limit) //分页
+			}
 
 			ier.Srespone <- &SearchRespone {
 				QueryId    : request.QueryId,
@@ -173,7 +172,7 @@ func (ier *IndexWorker) FindIndex() {
 				WordsNum   : request.WordsNum,
 				Words      : request.Words,
 				WordDocNum : wordDocNum,
-				InterDocs  : pageData,
+				InterDocs  : pData,
 			}
 		}
 	}

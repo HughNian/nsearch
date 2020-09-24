@@ -77,7 +77,7 @@ func main() {
 
 	/***add index***/
 	//1
-	text := []string{"1", "2", "明朝翰林院以永乐朝为界"}
+	text := []string{"1", "3", "【正品授权】壳牌/Shell 超凡喜力 全合成机油 新中超版 ULTRA 0W-30 SN 灰壳（4L装）"}
 	params, err := msgpack.Marshal(&text)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -89,7 +89,7 @@ func main() {
 	}
 
 	//2
-	text2 := []string{"2", "2", "明朝翰林院内阁大学士张居正"}
+	text2 := []string{"2", "3", "【品牌直供】嘉实多/Castrol 金嘉护机油 5W-40 SN级 合成技术（4L装）"}
 	params2, err := msgpack.Marshal(&text2)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -101,7 +101,7 @@ func main() {
 	}
 
 	//3
-	text3 := []string{"3", "2", "明朝永乐时期内阁首辅谢晋"}
+	text3 := []string{"3", "3", "【正品授权】壳牌/Shell 超凡喜力 全合成机油 新中超版 ULTRA 5W-40 SN 灰壳（4L装）"}
 	params3, err := msgpack.Marshal(&text3)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -113,7 +113,7 @@ func main() {
 	}
 
 	//4
-	text4 := []string{"4", "2", "距今300年的明朝翰林院开启了我国内阁制度，取消了宰相制度"}
+	text4 := []string{"4", "3", "【正品授权】壳牌/Shell 超凡喜力 全合成机油 新中超版 ULTRA 5W-40 SN 灰壳（4L装）"}
 	params4, err := msgpack.Marshal(&text4)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -125,7 +125,7 @@ func main() {
 	}
 
 	//5
-	text5 := []string{"5", "2", "大明正德翰林院大学士杨廷和"}
+	text5 := []string{"5", "3", "【正品授权】美孚/Mobil 新速霸1000合成机油 5W-30 SN级 4L"}
 	params5, err := msgpack.Marshal(&text5)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -137,7 +137,7 @@ func main() {
 	}
 
 	//6
-	text6 := []string{"6", "2", "大学士杨廷和是明朝大才子杨慎的父亲"}
+	text6 := []string{"6", "3", "【品牌直供】嘉实多/Castrol 金嘉护机油 10W-40 SN级 合成技术（4L装）"}
 	params6, err := msgpack.Marshal(&text6)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -148,7 +148,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	text7 := []string{"7", "2", "翰林院文渊阁大学士杨廷和"}
+	text7 := []string{"7", "3", "【正品授权】壳牌/Shell 喜力半合成机油HX7 5W-40 SN/CF 蓝壳（4L装）"}
 	params7, err := msgpack.Marshal(&text7)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -159,7 +159,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	text8 := []string{"8", "2", "翰林院大学士杨廷和为大明内阁首辅"}
+	text8 := []string{"8", "3", "【正品授权】壳牌/Shell 超凡喜力 全合成机油 新中超版 ULTRA 5W-30 SN 灰壳（4L装）"}
 	params8, err := msgpack.Marshal(&text8)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -171,7 +171,7 @@ func main() {
 	}
 
 	/***search***/
-	stext := []string{`大学士`}
+	stext := []string{`壳牌/Shell 超凡喜力 全合成机油 新中超版 ULTRA 5W-30 SN 灰壳（4L装）`, "1", "1", "10"}
 	params9, err := msgpack.Marshal(&stext)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
@@ -182,13 +182,35 @@ func main() {
 		fmt.Println(err)
 	}
 
-	stext2 := []string{`明朝张居正`}
+	stext2 := []string{`10W-40 SN`, "1", "1", "10"}
 	params10, err := msgpack.Marshal(&stext2)
 	if err != nil {
 		log.Fatalln("params msgpack error:", err)
 		os.Exit(1)
 	}
 	err = client.Do("NSearch", params10, respHandlerSearch)
+	if nil != err {
+		fmt.Println(err)
+	}
+
+	stext3 := []string{`5W-30 SN`, "1", "1", "10"}
+	params11, err := msgpack.Marshal(&stext3)
+	if err != nil {
+		log.Fatalln("params msgpack error:", err)
+		os.Exit(1)
+	}
+	err = client.Do("NSearch", params11, respHandlerSearch)
+	if nil != err {
+		fmt.Println(err)
+	}
+
+	stext4 := []string{`灰壳 5W-40`, "1", "1", "10"}
+	params12, err := msgpack.Marshal(&stext4)
+	if err != nil {
+		log.Fatalln("params msgpack error:", err)
+		os.Exit(1)
+	}
+	err = client.Do("NSearch", params12, respHandlerSearch)
 	if nil != err {
 		fmt.Println(err)
 	}
