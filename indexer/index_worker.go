@@ -154,7 +154,7 @@ func (ier *IndexWorker) FindIndex() {
 				}
 
 				//搜索模式处理
-				if request.Mode != 1 && documents1 == nil && documents1 == nil {
+				if request.Mode != 1 && documents1 == nil && documents2 == nil {
 					allDocuments = nil
 					break
 				}
