@@ -74,11 +74,13 @@ func NewEngine() *Engine {
 //把内容加入索引
 func (e *Engine) IndexDoc(docId, docType int, content string) {
 	if !e.inited {
-		log.Fatal("搜索引擎必须初始化")
+		fmt.Println("搜索引擎必须初始化")
+		return
 	}
 
 	if len(content) == 0 {
-		log.Fatalln("缺少索引内容")
+		fmt.Println("缺少索引内容")
+		return
 	}
 
 	//分词请求
