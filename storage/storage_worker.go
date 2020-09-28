@@ -89,7 +89,18 @@ func (sw *StorageWorker) DoStorage() {
 						dec2 := gob.NewDecoder(buf2)
 						err = dec2.Decode(&documents2)
 						if err == nil {
-							docs := append(documents1, documents2...) //merge documents
+							//docs := append(documents1, documents2...) //merge documents, 纯合并所有记录
+
+							//update record documents, 更新已有相同类型相同id的记录
+							var docs []*indexer.Document
+							for _, doc1 := range documents1 {
+								docs = append(docs, doc1)
+								for _, doc2 := range documents2 {
+									if doc2.DocId != doc1.DocId && doc2.DocType == doc1.DocType {
+										docs = append(docs, doc2)
+									}
+								}
+							}
 
 							//gob encode
 							var value bytes.Buffer

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"bytes"
 	"encoding/gob"
-	"fmt"
 )
 
 //索引器工作协程
@@ -136,19 +135,22 @@ func (ier *IndexWorker) FindIndex() {
 						dec := gob.NewDecoder(buf)
 						err := dec.Decode(&documents2)
 						if err == nil {
-							fmt.Println("data len", len(documents2))
-							for n, doc := range documents2 {
-								fmt.Println("n:", n, "content:", doc.Content)
-							}
+							//fmt.Println("key word:", word)
+							//fmt.Println("data len", len(documents2))
+							//for _, doc := range documents2 {
+							//	fmt.Println("docid:", doc.DocId, "doctype:", doc.DocType, "content:", doc.Content)
+							//}
 						}
 					}
 					if documents2 != nil {
 						if documents1 != nil && allDocuments[k] != nil && wordDocNum[word] > 0 {
 							allDocuments[k]  = append(allDocuments[k], documents2...)
+							allWordDocuments[word] = append(allWordDocuments[word], documents2...)
 							wordDocNum[word] = float32(len(documents1)) + float32(len(documents2))
 						} else {
 							allDocuments[k]  = documents2
 							wordDocNum[word] = float32(len(documents2))
+							allWordDocuments[word] = documents2
 						}
 					}
 				}
@@ -160,9 +162,16 @@ func (ier *IndexWorker) FindIndex() {
 				}
 			}
 
+			realAllDocs := make([][]*Document, 0)
+			for _, docs := range allDocuments {
+				if len(docs) != 0 {
+					realAllDocs = append(realAllDocs, docs)
+				}
+			}
+
 			var pData []*Document
-			if allDocuments != nil {
-				interDocs := getDocIntersect(allDocuments, request.Mode)
+			if realAllDocs != nil {
+				interDocs := getDocIntersect(realAllDocs, request.Mode)
 				pData = pageData(interDocs, request.Page, request.Limit) //分页
 			}
 
@@ -234,6 +243,7 @@ func getIntersect(one, two []*Document) (inter []*Document) {
 
 	for i := 0; i < len(one); i++ {
 		d1 := one[i]
+		//fmt.Println("d1 docid:", d1.DocId, "d1 doctype:", d1.DocType, "d1 content:", d1.Content)
 		if contains(two, d1) {
 			inter = append(inter, d1)
 		}
@@ -248,6 +258,7 @@ func contains(a []*Document, b *Document) bool {
 	}
 
 	for i := 0; i < len(a); i++ {
+		//fmt.Println("d2 docid:", a[i].DocId, "d2 doctype:", a[i].DocType, "d2 content:", a[i].Content)
 		if a[i].DocId == b.DocId && a[i].DocType == b.DocType {
 			return true
 		}
