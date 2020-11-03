@@ -94,12 +94,13 @@ func (sw *StorageWorker) DoStorage() {
 							//update record documents, 更新已有相同类型相同id的记录
 							var docs []*indexer.Document
 							for _, doc1 := range documents1 {
-								docs = append(docs, doc1)
-								for _, doc2 := range documents2 {
-									if doc2.DocId != doc1.DocId && doc2.DocType == doc1.DocType {
-										docs = append(docs, doc2)
-									}
+								if indexer.GetDocByTypeId(documents2, doc1.DocType, doc1.DocId) == nil {
+									docs = append(docs, doc1)
 								}
+							}
+
+							for _, doc2 := range documents2 {
+								docs = append(docs, doc2)
 							}
 
 							//gob encode

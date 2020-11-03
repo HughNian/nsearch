@@ -220,3 +220,17 @@ func (i *Index) CreateDocument(docId, docType int, wordsNum float32, words []str
 		WordsFreq  : wfreq,
 	}
 }
+
+func GetDocByTypeId(docs []*Document, docType int, docId int) *Document {
+	if len(docs) == 0 {
+		return nil
+	}
+
+	for _, doc := range docs {
+		if doc.DocType == docType && doc.DocId == docId {
+			return doc
+		}
+	}
+
+	return nil
+}
