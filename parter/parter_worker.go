@@ -158,6 +158,9 @@ func (pw *ParterWorker) DoParter() {
 					for n := 0; n < clen; n += MAX_CONTENT_SIZE {
 						start := n
 						end := start + MAX_CONTENT_SIZE
+						if end > clen {
+							end = clen
+						}
 
 						request.PartWords(request.ParterMode, string(crune[start:end]), string(request.ParterTag))
 					}
