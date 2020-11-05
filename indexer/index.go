@@ -242,7 +242,9 @@ func UpdateDocByTypeId(docs []*Document, ndoc *Document) {
 
 	for _, doc := range docs {
 		if doc.DocType == ndoc.DocType && doc.DocId == ndoc.DocId {
-			doc.Content = ndoc.Content
+			if doc.Content != ndoc.Content {
+				doc.Content = ndoc.Content
+			}
 		}
 	}
 }
