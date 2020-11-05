@@ -91,11 +91,14 @@ func (sw *StorageWorker) DoStorage() {
 						if err == nil {
 							//docs := append(documents1, documents2...) //merge documents, 纯合并所有记录
 
-							//update record documents, 更新已有相同类型相同id的记录
 							var docs []*indexer.Document
 							for _, doc1 := range documents1 {
 								if indexer.GetDocByTypeId(documents2, doc1.DocType, doc1.DocId) == nil {
+									//添加新doc记录
 									docs = append(docs, doc1)
+								} else {
+									//对存在的doc记录内容进行更新
+									indexer.UpdateDocByTypeId(documents2, doc1)
 								}
 							}
 

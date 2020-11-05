@@ -234,3 +234,15 @@ func GetDocByTypeId(docs []*Document, docType int, docId int) *Document {
 
 	return nil
 }
+
+func UpdateDocByTypeId(docs []*Document, ndoc *Document) {
+	if len(docs) == 0 || ndoc == nil {
+		return
+	}
+
+	for _, doc := range docs {
+		if doc.DocType == ndoc.DocType && doc.DocId == ndoc.DocId {
+			doc.Content = ndoc.Content
+		}
+	}
+}
