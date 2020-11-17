@@ -33,7 +33,7 @@ type IndexerRequest struct {
 	WordsNum   float32
 	Words      []string
 
-	Update     bool
+	Delete     bool  //是否删除索引
 }
 
 type SearchRequest struct {
@@ -80,11 +80,11 @@ func (ier *IndexWorker) Index() *Index {
 	return ier.index
 }
 
-func (ier *IndexWorker) AddIndex() {
+func (ier *IndexWorker) DoIndex() {
 	for true {
 		request := <- ier.Request
 
-		if request.DocId != 0 && request.DocType != 0 {
+		if request.DocId != 0 && request.DocType != 0 && !request.Delete { //添加、更新索引记录
 			document := ier.index.CreateDocument(
 				request.DocId,
 				request.DocType,
@@ -98,6 +98,13 @@ func (ier *IndexWorker) AddIndex() {
 					//fmt.Println("add index word:", wsi[0])
 					//fmt.Println("add index content:", request.Content)
 					ier.index.Add(strings.TrimSpace(wsi[0]), document)
+				}
+			}
+		} else if request.DocId != 0 && request.DocType != 0 && request.Delete { //删除索引记录
+			for _, word := range request.Words {
+				wsi := utils.GetWordsInfo(word)
+				if wsi != nil {
+					ier.index.delRecordByIdType(request.DocId, request.DocType, strings.TrimSpace(wsi[0]))
 				}
 			}
 		}
@@ -156,7 +163,7 @@ func (ier *IndexWorker) FindIndex() {
 				}
 
 				//搜索模式处理
-				if request.Mode != 1 && documents1 == nil && documents2 == nil {
+				if request.Mode != 1 && len(documents1) == 0 && len(documents2) == 0 {
 					allDocuments = nil
 					break
 				}

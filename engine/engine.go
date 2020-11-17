@@ -58,9 +58,9 @@ func NewEngine() *Engine {
 
 		//运行分词器
 		go eng.pworker.DoParter()
-		//运行搜索器，添加索引
-		go eng.iworker.AddIndex()
-		//运行索引器，搜索索引
+		//运行搜索器，添加更新删除索引
+		go eng.iworker.DoIndex()
+		//允许搜索器，搜索
 		go eng.iworker.FindIndex()
 		//运行排序器
 		go eng.rworker.DocRank()
@@ -115,7 +115,73 @@ func (e *Engine) IndexDoc(docId, docType int, content string) {
 							Content  : content,
 							WordsNum : float32(wordsNum),
 							Words    : useWords,
-							Update   : false,
+							Delete   : false,
+						}
+					}
+				}
+			}
+
+			return nil, nil
+		},
+	}
+}
+
+//删除内容的索引
+func (e *Engine) DelIndexDoc(docId, docType int, content string) {
+	if !e.inited {
+		fmt.Println("搜索引擎必须初始化")
+		return
+	}
+
+	if len(content) == 0 {
+		fmt.Println("缺少索引内容")
+		return
+	}
+
+	//分词请求
+	e.pworker.Request <- &parter.PaterRequest {
+		ParterMode : constant.PART_MODE_TWO,
+		ParterType : constant.PARTER_TYPE_ONE,
+		ParterTag  : "2",
+		DocId   : docId,
+		DocType : docType,
+		Content : content,
+		Result  : func(ret []byte) (interface{}, error) {
+			if len(ret) > 0 {
+				words := strings.Split(string(ret), "|")
+				wordsNum := len(words)
+				if wordsNum > 0 {
+					var useWords []string
+					for _, word := range words {
+						wsi := utils.GetWordsInfo(word)
+						if wsi != nil {
+							if e.stopWords.StopWordsExist(wsi[0]) {
+								wordsNum--
+							} else {
+								useWords = append(useWords, word)
+							}
+						}
+					}
+
+					if len(useWords) > 0 {
+						//删除btree索引记录
+						e.iworker.Request <- &indexer.IndexerRequest {
+							DocId    : docId,
+							DocType  : docType,
+							Content  : content,
+							WordsNum : float32(wordsNum),
+							Words    : useWords,
+							Delete   : true,
+						}
+
+						//删除持久层索引记录
+						e.sworker.Srequest <- &storage.StorageRequest {
+							DocId    : docId,
+							DocType  : docType,
+							Content  : content,
+							WordsNum : float32(wordsNum),
+							Words    : useWords,
+							Delete   : true,
 						}
 					}
 				}

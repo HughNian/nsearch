@@ -134,20 +134,41 @@ func (i *Index) addRecord(word string, doc *Document) {
 		documents : documents,
 		storge    : false,
 	})
-
-	/*keyId2 := utils.GetKeysId("明朝")
-	fmt.Println("keyId2:", keyId2)
-	item2 := i.getRecord(keyId2)
-	if item2 != nil {
-		record := item2.(*DocumentRecords)
-		fmt.Println("doc len:", len(record.documents))
-
-		for _, d := range record.documents {
-			fmt.Println("doc content:", d.Content)
-		}
-	}*/
 }
 
+//删除某个关键词下指定文档，其实就是更新关键词下文档
+func(i *Index) delRecordByIdType(DocId, DocType int, word string) {
+	var documents []*Document
+
+	keyId := utils.GetKeysId(word)
+	item := i.getRecord(keyId)
+	if item != nil {
+		record := item.(*DocumentRecords)
+		documents = record.documents
+	} else {
+		return
+	}
+
+	if len(documents) > 0 {
+		for i, d := range documents {
+			if d.DocId == DocId && d.DocType == DocType {
+				documents = append(documents[:i], documents[i+1:]...)
+			}
+		}
+	} else {
+		return
+	}
+
+	i.btLock.bt.ReplaceOrInsert(&DocumentRecords{
+		keyId     : keyId,
+		keyword   : word,
+		docNum    : len(documents),
+		documents : documents,
+		storge    : false,
+	})
+}
+
+//删除某个关键词下所有文档
 func (i *Index) delRecord(keyId int) btree.Item {
 	item := i.btLock.bt.Delete(&DocumentRecords{keyId:keyId})
 

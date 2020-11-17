@@ -4,8 +4,10 @@ import (
 	"sync"
 	"nsearch/constant"
 	"nsearch/indexer"
+	"nsearch/utils"
 	"bytes"
 	"encoding/gob"
+	"strings"
 )
 
 const (
@@ -36,6 +38,18 @@ type StorageWorker struct {
 	engine      string
 	Istorage    Storage
 	Record      chan map[string][]byte
+	Srequest    chan *StorageRequest
+}
+
+type StorageRequest struct {
+	DocId      int
+	DocType    int
+
+	Content    string
+	WordsNum   float32
+	Words      []string
+
+	Delete     bool  //是否删除索引
 }
 
 func NewStorageWorker(engine string) *StorageWorker {
@@ -64,6 +78,7 @@ func NewStorageWorker(engine string) *StorageWorker {
 				engine   : engine,
 				Istorage : istorage,
 				Record   : make(chan map[string][]byte, constant.CHAN_SIZE),
+				Srequest : make(chan *StorageRequest, constant.CHAN_SIZE),
 			}
 		})
 	}
@@ -72,6 +87,11 @@ func NewStorageWorker(engine string) *StorageWorker {
 }
 
 func (sw *StorageWorker) DoStorage() {
+	go sw.AddRecord()
+	go sw.DelIndexRecord()
+}
+
+func (sw *StorageWorker) AddRecord() {
 	for true {
 		justdoit := <- sw.Record
 
@@ -117,6 +137,49 @@ func (sw *StorageWorker) DoStorage() {
 					}
 				} else {
 					sw.Istorage.AddData([]byte(k), v)
+				}
+			}
+		}
+	}
+}
+
+//删除索引记录数据
+func (sw *StorageWorker) DelIndexRecord() {
+	for true {
+		request := <- sw.Srequest
+
+		if request.DocId != 0 && request.DocType != 0 && request.Delete {
+			for _, word := range request.Words {
+				wsi := utils.GetWordsInfo(word)
+				if wsi != nil {
+					index_word := strings.TrimSpace(wsi[0])
+					record, err := sw.Istorage.GetData([]byte(index_word))
+					if len(record) > 0 && err == nil {
+						var documents []*indexer.Document
+						buf := bytes.NewReader(record)
+						dec := gob.NewDecoder(buf)
+						err = dec.Decode(&documents)
+						if err == nil {
+							var docs []*indexer.Document
+							for i, doc := range documents {
+								if doc.DocId == request.DocId && doc.DocType == request.DocType {
+									if len(documents) > 1 {
+										docs = append(documents[:i], documents[i+1:]...)
+									}
+								}
+							}
+
+							//gob encode
+							if len(docs) > 0 {
+								var value bytes.Buffer
+								enc := gob.NewEncoder(&value)
+								err = enc.Encode(docs)
+								if err == nil {
+									sw.Istorage.AddData([]byte(index_word), value.Bytes())
+								}
+							}
+						}
+					}
 				}
 			}
 		}

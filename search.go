@@ -41,6 +41,33 @@ func IndexDocment(job wor.Job) ([]byte, error) {
 	return ret, nil
 }
 
+func DelIndexDocment(job wor.Job) ([]byte, error) {
+	resp := job.GetResponse()
+	if nil == resp {
+		return []byte(``), fmt.Errorf("response data error")
+	}
+
+	p1   := resp.StrParams[0]
+	docId, _  := strconv.ParseInt(p1, 10, 64)
+	p2 := resp.StrParams[1]
+	docType, _  := strconv.ParseInt(p2, 10, 64)
+	content := resp.StrParams[2]
+	sengine.DelIndexDoc(int(docId), int(docType), content)
+
+	retStruct := wor.GetRetStruct()
+	retStruct.Msg = "del index ok"
+	retStruct.Data = []byte(``)
+	ret, err := msgpack.Marshal(retStruct)
+	if nil != err {
+		return []byte(``), err
+	}
+
+	resp.RetLen = uint32(len(ret))
+	resp.Ret = ret
+
+	return ret, nil
+}
+
 func NSearch(job wor.Job) ([]byte, error) {
 	resp := job.GetResponse()
 	if nil == resp {
@@ -128,6 +155,7 @@ func main() {
 	sengine = engine.NewEngine()
 	if sengine != nil {
 		worker.AddFunction("IndexDoc", IndexDocment)
+		worker.AddFunction("DelIndexDoc", DelIndexDocment)
 		worker.AddFunction("NSearch", NSearch)
 		worker.AddFunction("FlushIndex", FlushIndex)
 	}
