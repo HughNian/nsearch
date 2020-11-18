@@ -88,7 +88,7 @@ func NewStorageWorker(engine string) *StorageWorker {
 
 func (sw *StorageWorker) DoStorage() {
 	go sw.AddRecord()
-	go sw.DelIndexRecord()
+	go sw.DelRecord()
 }
 
 func (sw *StorageWorker) AddRecord() {
@@ -144,7 +144,7 @@ func (sw *StorageWorker) AddRecord() {
 }
 
 //删除索引记录数据
-func (sw *StorageWorker) DelIndexRecord() {
+func (sw *StorageWorker) DelRecord() {
 	for true {
 		request := <- sw.Srequest
 
@@ -165,6 +165,8 @@ func (sw *StorageWorker) DelIndexRecord() {
 								if doc.DocId == request.DocId && doc.DocType == request.DocType {
 									if len(documents) > 1 {
 										docs = append(documents[:i], documents[i+1:]...)
+									} else if len(documents) == 1 {
+										sw.Istorage.DelData([]byte(index_word))
 									}
 								}
 							}
