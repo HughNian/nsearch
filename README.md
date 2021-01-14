@@ -1,3 +1,7 @@
+<div align="center">
+    <a href="http://www.niansong.top"><img src="https://raw.githubusercontent.com/HughNian/nsearch/master/nsearch_logo.png" alt="nsearch logo" width="160"></a>
+</div>
+
 ## nsearch全文搜索引擎系统
 
 nsearch：golang实现全文搜索引擎系统。基于npartword分词系统进行分词。分词系统与搜索系统的通信都是基于nmid的worker端和client端。   
