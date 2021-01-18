@@ -23,7 +23,7 @@ type RankerWorker struct {
 
 //查询排序请求
 type RankerRequest struct {
-	QueryId       int                 //查询id
+	QueryId       uint64              //查询id
 	Query         string              //查询短语
 	WordsNum      float32             //查询分词数量
 	Words         []string            //查询分词
@@ -33,7 +33,7 @@ type RankerRequest struct {
 
 //查询排序结果返回
 type RankerRespone struct {
-	QueryId     int               //查询id
+	QueryId     uint64            //查询id
 	Query       string            //查询短语
 	RetDocs     []*include.RetDocument    //查询结果文档
 }

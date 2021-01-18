@@ -259,7 +259,7 @@ func (e *Engine) NSearch(query string, mode, page, limit int, retCall RetCall) {
 				wordsNum := len(words)
 				if wordsNum > 0 {
 					var (
-						qid             int
+						qid             uint64
 						useWords        []string
 					)
 					wordsRecords := make(map[string][]byte)

@@ -19,7 +19,7 @@ type Index struct {
 }
 
 type DocumentRecords struct {
-	keyId      int
+	keyId      uint64
 	keyword    string
 	docNum     int              //该词的文档总数量
 	documents  []*Document
@@ -65,7 +65,7 @@ func (i *Index) Add(word string, doc *Document) {
 	i.btLock.Unlock()
 }
 
-func (i *Index) Find(keyId int) []*Document {
+func (i *Index) Find(keyId uint64) []*Document {
 	i.btLock.Lock()
 	defer i.btLock.Unlock()
 
@@ -80,7 +80,7 @@ func (i *Index) Find(keyId int) []*Document {
 	return nil
 }
 
-func (i *Index) Del(keyId int) *DocumentRecords {
+func (i *Index) Del(keyId uint64) *DocumentRecords {
 	i.btLock.Lock()
 	defer i.btLock.Unlock()
 
@@ -92,7 +92,7 @@ func (i *Index) Del(keyId int) *DocumentRecords {
 	return nil
 }
 
-func (i *Index) UpateStorageStatus(keyId int, status bool) {
+func (i *Index) UpateStorageStatus(keyId uint64, status bool) {
 	i.btLock.Lock()
 	defer i.btLock.Unlock()
 
@@ -169,13 +169,13 @@ func(i *Index) delRecordByIdType(DocId, DocType int, word string) {
 }
 
 //删除某个关键词下所有文档
-func (i *Index) delRecord(keyId int) btree.Item {
+func (i *Index) delRecord(keyId uint64) btree.Item {
 	item := i.btLock.bt.Delete(&DocumentRecords{keyId:keyId})
 
 	return item
 }
 
-func (i *Index) getRecord(keyId int) btree.Item {
+func (i *Index) getRecord(keyId uint64) btree.Item {
 	item := i.btLock.bt.Get(&DocumentRecords{keyId:keyId})
 
 	return item

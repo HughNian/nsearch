@@ -29,7 +29,7 @@ type Rank struct {
 type RankerQuery struct {
 	done          bool
 
-	queryId       int                      //查询id
+	queryId       uint64                   //查询id
 	query         string                   //查询短语
 	wordsNum      float32                  //查询分词数
 	words         []string                 //查询分词

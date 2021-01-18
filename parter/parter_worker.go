@@ -175,7 +175,9 @@ func (pw *ParterWorker) DoParter() {
 					request.ParterTag = "0"
 				}
 
-				request.PartWords(request.ParterMode, request.Content, string(request.ParterTag))
+				if len(request.Content) > 0 {
+					request.PartWords(request.ParterMode, request.Content, string(request.ParterTag))
+				}
 			}
 		}
 	}

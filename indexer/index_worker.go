@@ -37,7 +37,7 @@ type IndexerRequest struct {
 }
 
 type SearchRequest struct {
-	QueryId        int               //查询id
+	QueryId        uint64            //查询id
 	Query          string            //查询短语
 	WordsNum       float32           //查询分词数量
 	Words          []string          //查询分词
@@ -48,7 +48,7 @@ type SearchRequest struct {
 }
 
 type SearchRespone struct {
-	QueryId     int                 //查询id
+	QueryId     uint64              //查询id
 	Query       string              //查询短语
 	WordsNum    float32             //查询分词数量
 	Words       []string            //查询分词
