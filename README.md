@@ -41,70 +41,70 @@ const SERVERHOST = "xxx.xxx.x.xxx"
 const SERVERPORT = "xxxx"
 
 func main() {
-	var client *cli.Client
-	var err error
-
-	serverAddr := SERVERHOST + ":" + SERVERPORT
-	client, err = cli.NewClient("tcp", serverAddr)
-	if nil == client || err != nil {
-		log.Println(err)
-		return
-	}
-	defer client.Close()
-
-	client.ErrHandler= func(e error) {
-		if cli.RESTIMEOUT == e {
-			log.Println("time out here")
-		} else {
-			log.Println(e)
-		}
-		fmt.Println("client err here")
-	}
-
-	respHandlerIndex := func(resp *cli.Response) {
-		if resp.DataType == cli.PDT_S_RETURN_DATA && resp.RetLen != 0 {
-			if resp.RetLen == 0 {
-				log.Println("ret empty")
-				return
-			}
-
-			var retStruct cli.RetStruct
-			err := msgpack.Unmarshal(resp.Ret, &retStruct)
-			if nil != err {
-				log.Fatalln(err)
-				return
-			}
-
-			fmt.Println(retStruct.Msg)
-			return
-		}
-	}
-
-	respHandlerSearch := func(resp *cli.Response) {
-		if resp.DataType == cli.PDT_S_RETURN_DATA && resp.RetLen != 0 {
-			if resp.RetLen == 0 {
-				log.Println("ret empty")
-				return
-			}
-
-			var retStruct cli.RetStruct
-			err := msgpack.Unmarshal(resp.Ret, &retStruct)
-			if nil != err {
-				log.Fatalln(err)
-				return
-			}
-
-			if retStruct.Code != 0 {
-				fmt.Println(retStruct.Msg)
-				return
-			}
-
-			fmt.Println(string(retStruct.Data))
-			fmt.Print("\n\n")
-		}
-	}
-	
-	//添加、更新索引
+    var client *cli.Client
+    var err error
+    
+    serverAddr := SERVERHOST + ":" + SERVERPORT
+    client, err = cli.NewClient("tcp", serverAddr)
+    if nil == client || err != nil {
+        log.Println(err)
+        return
+    }
+    defer client.Close()
+    
+    client.ErrHandler= func(e error) {
+        if cli.RESTIMEOUT == e {
+            log.Println("time out here")
+        } else {
+            log.Println(e)
+        }
+        fmt.Println("client err here")
+    }
+    
+    respHandlerIndex := func(resp *cli.Response) {
+        if resp.DataType == cli.PDT_S_RETURN_DATA && resp.RetLen != 0 {
+            if resp.RetLen == 0 {
+                log.Println("ret empty")
+                return
+            }
+    
+            var retStruct cli.RetStruct
+            err := msgpack.Unmarshal(resp.Ret, &retStruct)
+            if nil != err {
+                log.Fatalln(err)
+                return
+            }
+    
+            fmt.Println(retStruct.Msg)
+            return
+        }
+    }
+    
+    respHandlerSearch := func(resp *cli.Response) {
+        if resp.DataType == cli.PDT_S_RETURN_DATA && resp.RetLen != 0 {
+            if resp.RetLen == 0 {
+                log.Println("ret empty")
+                return
+            }
+    
+            var retStruct cli.RetStruct
+            err := msgpack.Unmarshal(resp.Ret, &retStruct)
+            if nil != err {
+                log.Fatalln(err)
+                return
+            }
+    
+            if retStruct.Code != 0 {
+                fmt.Println(retStruct.Msg)
+                return
+            }
+    
+            fmt.Println(string(retStruct.Data))
+            fmt.Print("\n\n")
+        }
+    }
+    
+    //添加、更新索引
     docId   := "1"
     docType := "1"
     content := "文本"
