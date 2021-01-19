@@ -105,10 +105,10 @@ func main() {
 	}
 	
 	//添加、更新索引
-docId   := "1"
-docType := "1"
-content := "文本"
-text := []string{docId, docType, content}
+    docId   := "1"
+    docType := "1"
+    content := "文本"
+    text := []string{docId, docType, content}
     params, err := msgpack.Marshal(&text)
     if err != nil {
         log.Fatalln("params msgpack error:", err)
