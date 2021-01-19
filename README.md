@@ -26,6 +26,7 @@ nsearch作为搜索服务的话，也是基于nmid作为worker端。本系统采
 
 ## 示例
 ```php
+//golang调用示例
 package main
 
 import (
@@ -104,10 +105,10 @@ func main() {
 	}
 	
 	//添加、更新索引
-	docId   := "1"
-	docType := "1"
-	content := "文本"
-	text := []string{docId, docType, content}
+docId   := "1"
+docType := "1"
+content := "文本"
+text := []string{docId, docType, content}
     params, err := msgpack.Marshal(&text)
     if err != nil {
         log.Fatalln("params msgpack error:", err)
