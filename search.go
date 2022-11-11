@@ -1,15 +1,16 @@
 package main
 
 import (
-	wor "github.com/HughNian/nmid/worker"
+	"encoding/json"
+	"fmt"
+	"github.com/HughNian/nmid/pkg/model"
+	wor "github.com/HughNian/nmid/pkg/worker"
+	"github.com/vmihailenco/msgpack"
+	"log"
 	"nsearch/constant"
 	"nsearch/engine"
-	"log"
-	"fmt"
-	"github.com/vmihailenco/msgpack"
-	"strconv"
 	"nsearch/include"
-	"encoding/json"
+	"strconv"
 )
 
 var sengine *engine.Engine
@@ -20,14 +21,14 @@ func IndexDocment(job wor.Job) ([]byte, error) {
 		return []byte(``), fmt.Errorf("response data error")
 	}
 
-	p1   := resp.StrParams[0]
-	docId, _  := strconv.ParseInt(p1, 10, 64)
-	p2 := resp.StrParams[1]
-	docType, _  := strconv.ParseInt(p2, 10, 64)
-	content := resp.StrParams[2]
+	docIdStr := resp.ParamsMap["docId"].(string)
+	docId, _ := strconv.ParseInt(docIdStr, 10, 64)
+	docTypeStr := resp.ParamsMap["docType"].(string)
+	docType, _ := strconv.ParseInt(docTypeStr, 10, 64)
+	content := resp.ParamsMap["content"].(string)
 	sengine.IndexDoc(int(docId), int(docType), content)
 
-	retStruct := wor.GetRetStruct()
+	retStruct := model.GetRetStruct()
 	retStruct.Msg = "add index ok"
 	retStruct.Data = []byte(``)
 	ret, err := msgpack.Marshal(retStruct)
@@ -47,14 +48,14 @@ func DelIndexDocment(job wor.Job) ([]byte, error) {
 		return []byte(``), fmt.Errorf("response data error")
 	}
 
-	p1   := resp.StrParams[0]
-	docId, _  := strconv.ParseInt(p1, 10, 64)
-	p2 := resp.StrParams[1]
-	docType, _  := strconv.ParseInt(p2, 10, 64)
-	content := resp.StrParams[2]
+	docIdStr := resp.ParamsMap["docId"].(string)
+	docId, _ := strconv.ParseInt(docIdStr, 10, 64)
+	docTypeStr := resp.ParamsMap["docType"].(string)
+	docType, _ := strconv.ParseInt(docTypeStr, 10, 64)
+	content := resp.ParamsMap["content"].(string)
 	sengine.DelIndexDoc(int(docId), int(docType), content)
 
-	retStruct := wor.GetRetStruct()
+	retStruct := model.GetRetStruct()
 	retStruct.Msg = "del index ok"
 	retStruct.Data = []byte(``)
 	ret, err := msgpack.Marshal(retStruct)
@@ -75,11 +76,14 @@ func NSearch(job wor.Job) ([]byte, error) {
 	}
 
 	resultData := make(chan []byte)
-	query := resp.StrParams[0]
-	mode, _  := strconv.ParseInt(resp.StrParams[1], 10, 64)
-	page, _  := strconv.ParseInt(resp.StrParams[2], 10, 64)
-	limit, _ := strconv.ParseInt(resp.StrParams[3], 10, 64)
-	retStruct := wor.GetRetStruct()
+	query := resp.ParamsMap["query"].(string)
+	modeStr := resp.ParamsMap["mode"].(string)
+	mode, _ := strconv.ParseInt(modeStr, 10, 64)
+	pageStr := resp.ParamsMap["page"].(string)
+	page, _ := strconv.ParseInt(pageStr, 10, 64)
+	limitStr := resp.ParamsMap["limit"].(string)
+	limit, _ := strconv.ParseInt(limitStr, 10, 64)
+	retStruct := model.GetRetStruct()
 	sengine.NSearch(query, int(mode), int(page), int(limit), func(result []*include.RetDocument) (ret []byte, err error) {
 		if result != nil && len(result) != 0 {
 			data, err := json.Marshal(result)
@@ -93,7 +97,7 @@ func NSearch(job wor.Job) ([]byte, error) {
 			retStruct.Data = data
 		} else {
 			retStruct.Code = 100
-			retStruct.Msg  = "no result"
+			retStruct.Msg = "no result"
 			retStruct.Data = []byte(``)
 		}
 
@@ -113,7 +117,7 @@ func NSearch(job wor.Job) ([]byte, error) {
 	})
 
 	//异步管道通信，在没有数据返回时会阻塞
-	returnData := <- resultData
+	returnData := <-resultData
 
 	return returnData, nil
 }
@@ -126,7 +130,7 @@ func FlushIndex(job wor.Job) ([]byte, error) {
 
 	sengine.FlushIndex()
 
-	retStruct := wor.GetRetStruct()
+	retStruct := model.GetRetStruct()
 	retStruct.Msg = "flush index ok"
 	retStruct.Data = []byte(``)
 	ret, err := msgpack.Marshal(retStruct)

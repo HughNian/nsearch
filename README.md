@@ -25,7 +25,7 @@ nsearch作为搜索服务的话，也是基于nmid作为worker端。本系统采
 2.搜索你需要的结果，具体的使用参考client目录中的代码。  
 
 ## 示例
-```php
+```go
 //golang调用示例
 package main
 
@@ -164,7 +164,7 @@ func main() {
 }
 ```
 
-```php
+```go
 php调用示例
 
 $host = 'xxx.xxx.x.xx';

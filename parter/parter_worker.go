@@ -1,48 +1,50 @@
 package parter
 
 import (
-	"sync"
-	"strings"
+	cli "github.com/HughNian/nmid/pkg/client"
+	"github.com/HughNian/nmid/pkg/model"
+	"github.com/vmihailenco/msgpack"
 	"io"
 	"log"
 	"nsearch/constant"
-	"github.com/vmihailenco/msgpack"
-	cli "github.com/HughNian/nmid/client"
+	"strings"
+	"sync"
 )
 
 const MAX_CONTENT_SIZE = 512
 
-//分词器工作协程
+// 分词器工作协程
 var (
 	parter *ParterWorker
 	once   sync.Once
 )
 
-//索引分词结果
+// 索引分词结果
 type PaterResult func(data []byte) (interface{}, error)
-//查询分词结果
+
+// 查询分词结果
 type QueryPaterResult func(data []byte) (interface{}, error)
 
 type ParterWorker struct {
-	inited         bool
+	inited bool
 
-	nmidClient    *cli.Client
-	nmidSerAddr   string
+	nmidClient  *cli.Client
+	nmidSerAddr string
 
-	Request       chan *PaterRequest
+	Request chan *PaterRequest
 }
 
 type PaterRequest struct {
-	ParterMode    string  //分词模式
-	ParterType    int     //分词请求类型: 1-文档分词，2-query查询分词
-	ParterTag     string  //分词信息展示: "0"-不展示,"1"-显示词的词性,"2"-显示词的词频、distance
+	ParterMode string //分词模式
+	ParterType int    //分词请求类型: 1-文档分词，2-query查询分词
+	ParterTag  string //分词信息展示: "0"-不展示,"1"-显示词的词性,"2"-显示词的词频、distance
 
-	DocId         int
-	DocType       int
-	Content       string
+	DocId   int
+	DocType int
+	Content string
 
-	Result        PaterResult
-	QResult       QueryPaterResult
+	Result  PaterResult
+	QResult QueryPaterResult
 }
 
 func NewParterWorker() *ParterWorker {
@@ -51,11 +53,11 @@ func NewParterWorker() *ParterWorker {
 			serverAddr := strings.Join([]string{constant.NMID_SERVER_HOST, constant.NMID_SERVER_PORT}, ":")
 			client, err := cli.NewClient("tcp", serverAddr)
 			if err == nil {
-				parter = &ParterWorker {
-					inited      : true,
-					nmidClient  : client,
-					nmidSerAddr : serverAddr,
-					Request     : make(chan *PaterRequest, constant.CHAN_SIZE),
+				parter = &ParterWorker{
+					inited:      true,
+					nmidClient:  client,
+					nmidSerAddr: serverAddr,
+					Request:     make(chan *PaterRequest, constant.CHAN_SIZE),
 				}
 			}
 		})
@@ -63,7 +65,7 @@ func NewParterWorker() *ParterWorker {
 
 	if parter != nil && parter.inited == true {
 		parter.nmidClient.ErrHandler = func(e error) {
-			if cli.RESTIMEOUT == e {
+			if model.RESTIMEOUT == e {
 				parter.inited = false
 				parter = nil
 			} else if io.EOF == e {
@@ -77,13 +79,13 @@ func NewParterWorker() *ParterWorker {
 }
 
 func (pr *PaterRequest) RespHandler(resp *cli.Response) {
-	if resp.DataType == cli.PDT_S_RETURN_DATA && resp.RetLen != 0 {
+	if resp.DataType == model.PDT_S_RETURN_DATA && resp.RetLen != 0 {
 		if resp.RetLen == 0 {
 			log.Println("ret empty")
 			return
 		}
 
-		var retStruct cli.RetStruct
+		var retStruct model.RetStruct
 		err := msgpack.Unmarshal(resp.Ret, &retStruct)
 		if nil != err {
 			log.Fatalln(err)
@@ -102,13 +104,13 @@ func (pr *PaterRequest) RespHandler(resp *cli.Response) {
 }
 
 func (pr *PaterRequest) QRespHandler(resp *cli.Response) {
-	if resp.DataType == cli.PDT_S_RETURN_DATA && resp.RetLen != 0 {
+	if resp.DataType == model.PDT_S_RETURN_DATA && resp.RetLen != 0 {
 		if resp.RetLen == 0 {
 			log.Println("ret empty")
 			return
 		}
 
-		var retStruct cli.RetStruct
+		var retStruct model.RetStruct
 		err := msgpack.Unmarshal(resp.Ret, &retStruct)
 		if nil != err {
 			log.Fatalln(err)
@@ -127,7 +129,9 @@ func (pr *PaterRequest) QRespHandler(resp *cli.Response) {
 }
 
 func (pr *PaterRequest) PartWords(mode, text, tag string) error {
-	ptext := []string{text, tag}
+	ptext := make(map[string]interface{})
+	ptext["text"] = text
+	ptext["p2"] = tag
 	params, err := msgpack.Marshal(&ptext)
 	if err == nil {
 		if pr.ParterType == constant.PARTER_TYPE_ONE {
@@ -142,7 +146,7 @@ func (pr *PaterRequest) PartWords(mode, text, tag string) error {
 
 func (pw *ParterWorker) DoParter() {
 	for true {
-		request := <- pw.Request
+		request := <-pw.Request
 
 		if len(request.Content) != 0 {
 			//对文档分词
