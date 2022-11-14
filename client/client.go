@@ -15,8 +15,8 @@ var once sync.Once
 var client *cli.Client
 var err error
 
-const NMIDSERVERHOST = "127.0.0.1"
-const NMIDSERVERPORT = "6808"
+const NMIDSERVERHOST = "192.168.64.6" //"127.0.0.1"
+const NMIDSERVERPORT = "30690"        //"6808"
 
 // 单实列连接，适合长连接
 func getClient() *cli.Client {

@@ -6,7 +6,7 @@ metadata:
   labels:
     app: nsearch
 spec:
-  replicas: 3 #根据情况定义副本数
+  replicas: 1 #根据情况定义副本数
   selector:
     matchLabels:
       app: nsearch
