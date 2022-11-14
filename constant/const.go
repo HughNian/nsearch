@@ -17,6 +17,11 @@ const (
 	NMID_SERVER_PORT = "6808"
 )
 
+const (
+	NPW_NMID_SERVER_HOST = "192.168.64.6"
+	NPW_NMID_SERVER_PORT = "30688"
+)
+
 // 分词类型方法
 const (
 	PART_MODE_ONE   = "PartWordsM1" //普通分词方法

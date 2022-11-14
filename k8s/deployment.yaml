@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nsearch-deployment
+  namespace: nsearch
+  labels:
+    app: nsearch
+spec:
+  replicas: 3 #根据情况定义副本数
+  selector:
+    matchLabels:
+      app: nsearch
+  template:
+    metadata:
+      labels:
+        app: nsearch
+    spec:
+      containers:
+        - name: nmid-sidecar #使用nmid作为nsearch服务sidecar
+          image: docker.io/hughnian/nmid:20 #这里的tag根据具体镜像tag取值
+          command: ["/etc/service/run"]
+          ports:
+            - name: tcp
+              containerPort: 6808
+            - name: http
+              containerPort: 6809
+        - name: nsearch
+          image: docker.io/hughnian/nsearch:1 #这里的tag根据具体镜像tag取值
+          command: ["/etc/service/run"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nsearch-service
+  namespace: nsearch
+spec:
+  selector:
+    app: nsearch
+  ports:
+    - name: nsearch-tcp
+      nodePort: 30690
+      port: 6808
+      protocol: TCP
+      targetPort: 6808
+    - name: nsearch-http
+      nodePort: 30691
+      port: 6809
+      protocol: TCP
+      targetPort: 6809
+  type: NodePort
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    field.cattle.io/description: nsearch-service-http
+  name: nsearch-service-http
+  namespace: nsearch
+spec:
+  defaultBackend:
+    service:
+      name: nsearch-service
+      port:
+        number: 6809
+  rules:
+    - host: nsearch.mytest.com #使用自己相应域名
+      http:
+        paths:
+          - backend:
+              service:
+                name: nsearch-service
+                port:
+                  number: 6809
+            path: /
+            pathType: Prefix

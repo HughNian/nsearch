@@ -28,7 +28,7 @@ type QueryPaterResult func(data []byte) (interface{}, error)
 type ParterWorker struct {
 	inited bool
 
-	nmidClient  *cli.Client
+	NmidClient  *cli.Client
 	nmidSerAddr string
 
 	Request chan *PaterRequest
@@ -50,12 +50,12 @@ type PaterRequest struct {
 func NewParterWorker() *ParterWorker {
 	if parter == nil {
 		once.Do(func() {
-			serverAddr := strings.Join([]string{constant.NMID_SERVER_HOST, constant.NMID_SERVER_PORT}, ":")
+			serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
 			client, err := cli.NewClient("tcp", serverAddr)
 			if err == nil {
 				parter = &ParterWorker{
 					inited:      true,
-					nmidClient:  client,
+					NmidClient:  client,
 					nmidSerAddr: serverAddr,
 					Request:     make(chan *PaterRequest, constant.CHAN_SIZE),
 				}
@@ -64,7 +64,7 @@ func NewParterWorker() *ParterWorker {
 	}
 
 	if parter != nil && parter.inited == true {
-		parter.nmidClient.ErrHandler = func(e error) {
+		parter.NmidClient.ErrHandler = func(e error) {
 			if model.RESTIMEOUT == e {
 				parter.inited = false
 				parter = nil
@@ -129,15 +129,19 @@ func (pr *PaterRequest) QRespHandler(resp *cli.Response) {
 }
 
 func (pr *PaterRequest) PartWords(mode, text, tag string) error {
+	if parter == nil && parter.inited == false {
+		parter = NewParterWorker()
+	}
+
 	ptext := make(map[string]interface{})
 	ptext["text"] = text
 	ptext["p2"] = tag
 	params, err := msgpack.Marshal(&ptext)
 	if err == nil {
 		if pr.ParterType == constant.PARTER_TYPE_ONE {
-			return parter.nmidClient.Do(mode, params, pr.RespHandler)
+			return parter.NmidClient.Do(mode, params, pr.RespHandler)
 		} else if pr.ParterType == constant.PARTER_TYPE_TWO {
-			return parter.nmidClient.Do(mode, params, pr.QRespHandler)
+			return parter.NmidClient.Do(mode, params, pr.QRespHandler)
 		}
 	}
 
