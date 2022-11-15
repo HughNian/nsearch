@@ -52,6 +52,8 @@ github.com/DataDog/zstd v1.4.1/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t
 github.com/HdrHistogram/hdrhistogram-go v1.0.1/go.mod h1:BWJ+nMSHY3L41Zj7CA3uXnloDp7xxV0YvstAE7nKTaM=
 github.com/HughNian/nmid v1.0.5 h1:ZwCCPoS4HqSAodkaWGZpWwxEjR1k0uR57fuuaV4UxII=
 github.com/HughNian/nmid v1.0.5/go.mod h1:1Q4XpR4QfVDEnKfEPeUveCSUaUv1ZaazdagFe93aUaY=
+github.com/HughNian/nmid v1.0.6 h1:M9dPmV9PvqHTZn1UCG7fo1YGX3iLRyM+ItyVX77+JfE=
+github.com/HughNian/nmid v1.0.6/go.mod h1:1Q4XpR4QfVDEnKfEPeUveCSUaUv1ZaazdagFe93aUaY=
 github.com/Microsoft/go-winio v0.5.0/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=

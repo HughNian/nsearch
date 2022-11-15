@@ -15,7 +15,8 @@ const MAX_CONTENT_SIZE = 512
 
 // 分词器工作协程
 var (
-	parter *ParterWorker
+	Parter *ParterWorker
+	Client *cli.Client
 	once   sync.Once
 )
 
@@ -26,12 +27,9 @@ type PaterResult func(data []byte) (interface{}, error)
 type QueryPaterResult func(data []byte) (interface{}, error)
 
 type ParterWorker struct {
-	inited bool
-
-	NmidClient  *cli.Client
+	inited      bool
 	nmidSerAddr string
-
-	Request chan *PaterRequest
+	Request     chan *PaterRequest
 }
 
 type PaterRequest struct {
@@ -47,35 +45,36 @@ type PaterRequest struct {
 	QResult QueryPaterResult
 }
 
-func NewParterWorker() *ParterWorker {
-	if parter == nil {
-		once.Do(func() {
-			serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
-			client, err := cli.NewClient("tcp", serverAddr)
-			if err == nil {
-				parter = &ParterWorker{
-					inited:      true,
-					NmidClient:  client,
-					nmidSerAddr: serverAddr,
-					Request:     make(chan *PaterRequest, constant.CHAN_SIZE),
-				}
-			}
-		})
+// 单实列连接，适合长连接
+func getClient() *cli.Client {
+	serverAddr := constant.NPW_NMID_SERVER_HOST + ":" + constant.NPW_NMID_SERVER_PORT
+	Client, err := cli.NewClient("tcp", serverAddr)
+	if nil == Client || err != nil {
+		log.Println(err)
 	}
 
-	if parter != nil && parter.inited == true {
-		parter.NmidClient.ErrHandler = func(e error) {
-			if model.RESTIMEOUT == e {
-				parter.inited = false
-				parter = nil
-			} else if io.EOF == e {
-				parter.inited = false
-				parter = nil
-			}
+	Client.ErrHandler = func(e error) {
+		if model.RESTIMEOUT == e {
+			Parter.inited = false
+			Parter = nil
+		} else if io.EOF == e {
+			Parter.inited = false
+			Parter = nil
 		}
 	}
 
-	return parter
+	return Client
+}
+
+func NewParterWorker() *ParterWorker {
+	serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
+	Parter = &ParterWorker{
+		inited:      true,
+		nmidSerAddr: serverAddr,
+		Request:     make(chan *PaterRequest, constant.CHAN_SIZE),
+	}
+
+	return Parter
 }
 
 func (pr *PaterRequest) RespHandler(resp *cli.Response) {
@@ -129,9 +128,7 @@ func (pr *PaterRequest) QRespHandler(resp *cli.Response) {
 }
 
 func (pr *PaterRequest) PartWords(mode, text, tag string) error {
-	if parter == nil && parter.inited == false {
-		parter = NewParterWorker()
-	}
+	Client = getClient()
 
 	ptext := make(map[string]interface{})
 	ptext["text"] = text
@@ -139,9 +136,9 @@ func (pr *PaterRequest) PartWords(mode, text, tag string) error {
 	params, err := msgpack.Marshal(&ptext)
 	if err == nil {
 		if pr.ParterType == constant.PARTER_TYPE_ONE {
-			return parter.NmidClient.Do(mode, params, pr.RespHandler)
+			return Client.Do(mode, params, pr.RespHandler)
 		} else if pr.ParterType == constant.PARTER_TYPE_TWO {
-			return parter.NmidClient.Do(mode, params, pr.QRespHandler)
+			return Client.Do(mode, params, pr.QRespHandler)
 		}
 	}
 
