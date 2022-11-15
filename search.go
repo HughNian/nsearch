@@ -145,6 +145,8 @@ func FlushIndex(job wor.Job) ([]byte, error) {
 }
 
 func main() {
+	showLogo()
+
 	var worker *wor.Worker
 	var err error
 	serverAddr := constant.NMID_SERVER_HOST + ":" + constant.NMID_SERVER_PORT
@@ -171,4 +173,15 @@ func main() {
 	}
 
 	worker.WorkerDo()
+}
+
+func showLogo() {
+	logo := `
+                                    __  
+   ____  ________  ____ ___________/ /_ 
+  / __ \/ ___/ _ \/ __ \/ ___/ ___/ __ \
+ / / / (__  )  __/ /_/ / /  / /__/ / / /
+/_/ /_/____/\___/\__,_/_/   \___/_/ /_/
+`
+	fmt.Println(logo)
 }
