@@ -1,40 +1,40 @@
 package engine
 
 import (
-	"nsearch/indexer"
-	"nsearch/parter"
-	"nsearch/constant"
-	"nsearch/ranker"
-	"nsearch/utils"
-	"nsearch/include"
-	"nsearch/storage"
-	"sync"
-	"log"
-	"strings"
-	"fmt"
 	"bytes"
 	"encoding/gob"
+	"fmt"
+	"log"
+	"nsearch/constant"
+	"nsearch/include"
+	"nsearch/indexer"
+	"nsearch/parter"
+	"nsearch/ranker"
+	"nsearch/storage"
+	"nsearch/utils"
+	"strings"
+	"sync"
 )
 
 var (
-	eng    *Engine
-	once   sync.Once
+	eng  *Engine
+	once sync.Once
 )
 
 type Engine struct {
-	inited     bool
+	inited bool
 
-	stopWords  *StopWords
+	stopWords *StopWords
 
-	iworker    *indexer.IndexWorker
-	pworker    *parter.ParterWorker
-	rworker    *ranker.RankerWorker
-	sworker    *storage.StorageWorker
+	iworker *indexer.IndexWorker
+	pworker *parter.ParterWorker
+	rworker *ranker.RankerWorker
+	sworker *storage.StorageWorker
 }
 
 type QueryRequest struct {
-	query      string
-	retCall    RetCall
+	query   string
+	retCall RetCall
 }
 
 type RetCall func(result []*include.RetDocument) ([]byte, error)
@@ -46,13 +46,13 @@ func NewEngine() *Engine {
 
 	if eng == nil {
 		once.Do(func() {
-			eng = &Engine {
-				inited    : true,
-				stopWords : NewStopWords("./data/stop_words.txt"),
-				iworker   : indexer.NewIndexWorker(),
-				pworker   : parter.NewParterWorker(),
-				rworker   : ranker.NewRankerWorker(),
-				sworker   : storage.NewStorageWorker(constant.DB_ENGINE),
+			eng = &Engine{
+				inited:    true,
+				stopWords: NewStopWords("./data/stop_words.txt"),
+				iworker:   indexer.NewIndexWorker(),
+				pworker:   parter.NewParterWorker(),
+				rworker:   ranker.NewRankerWorker(),
+				sworker:   storage.NewStorageWorker(constant.DB_ENGINE),
 			}
 		})
 
@@ -60,7 +60,7 @@ func NewEngine() *Engine {
 		go eng.pworker.DoParter()
 		//运行搜索器，添加更新删除索引
 		go eng.iworker.DoIndex()
-		//允许搜索器，搜索
+		//运行搜索器，搜索
 		go eng.iworker.FindIndex()
 		//运行排序器
 		go eng.rworker.DocRank()
@@ -71,7 +71,7 @@ func NewEngine() *Engine {
 	return eng
 }
 
-//把内容加入索引
+// IndexDoc 把内容加入索引
 func (e *Engine) IndexDoc(docId, docType int, content string) {
 	if !e.inited {
 		fmt.Println("搜索引擎必须初始化")
@@ -84,14 +84,14 @@ func (e *Engine) IndexDoc(docId, docType int, content string) {
 	}
 
 	//分词请求
-	e.pworker.Request <- &parter.PaterRequest {
-		ParterMode : constant.PART_MODE_TWO,
-		ParterType : constant.PARTER_TYPE_ONE,
-		ParterTag  : "2", //这里不能为"0"
-		DocId   : docId,
-		DocType : docType,
-		Content : content,
-		Result  : func(ret []byte) (interface{}, error) {
+	e.pworker.Request <- &parter.PaterRequest{
+		ParterMode: constant.PART_MODE_TWO,
+		ParterType: constant.PARTER_TYPE_ONE,
+		ParterTag:  "2", //这里不能为"0"
+		DocId:      docId,
+		DocType:    docType,
+		Content:    content,
+		Result: func(ret []byte) (interface{}, error) {
 			if len(ret) > 0 {
 				words := strings.Split(string(ret), "|")
 				wordsNum := len(words)
@@ -109,13 +109,13 @@ func (e *Engine) IndexDoc(docId, docType int, content string) {
 					}
 
 					if len(useWords) > 0 {
-						e.iworker.Request <- &indexer.IndexerRequest {
-							DocId    : docId,
-							DocType  : docType,
-							Content  : content,
-							WordsNum : float32(wordsNum),
-							Words    : useWords,
-							Delete   : false,
+						e.iworker.Request <- &indexer.IndexerRequest{
+							DocId:    docId,
+							DocType:  docType,
+							Content:  content,
+							WordsNum: float32(wordsNum),
+							Words:    useWords,
+							Delete:   false,
 						}
 					}
 				}
@@ -126,7 +126,7 @@ func (e *Engine) IndexDoc(docId, docType int, content string) {
 	}
 }
 
-//删除内容的索引
+// DelIndexDoc 删除内容的索引
 func (e *Engine) DelIndexDoc(docId, docType int, content string) {
 	if !e.inited {
 		fmt.Println("搜索引擎必须初始化")
@@ -139,14 +139,14 @@ func (e *Engine) DelIndexDoc(docId, docType int, content string) {
 	}
 
 	//分词请求
-	e.pworker.Request <- &parter.PaterRequest {
-		ParterMode : constant.PART_MODE_TWO,
-		ParterType : constant.PARTER_TYPE_ONE,
-		ParterTag  : "2",
-		DocId   : docId,
-		DocType : docType,
-		Content : content,
-		Result  : func(ret []byte) (interface{}, error) {
+	e.pworker.Request <- &parter.PaterRequest{
+		ParterMode: constant.PART_MODE_TWO,
+		ParterType: constant.PARTER_TYPE_ONE,
+		ParterTag:  "2",
+		DocId:      docId,
+		DocType:    docType,
+		Content:    content,
+		Result: func(ret []byte) (interface{}, error) {
 			if len(ret) > 0 {
 				words := strings.Split(string(ret), "|")
 				wordsNum := len(words)
@@ -165,23 +165,23 @@ func (e *Engine) DelIndexDoc(docId, docType int, content string) {
 
 					if len(useWords) > 0 {
 						//删除btree索引记录
-						e.iworker.Request <- &indexer.IndexerRequest {
-							DocId    : docId,
-							DocType  : docType,
-							Content  : content,
-							WordsNum : float32(wordsNum),
-							Words    : useWords,
-							Delete   : true,
+						e.iworker.Request <- &indexer.IndexerRequest{
+							DocId:    docId,
+							DocType:  docType,
+							Content:  content,
+							WordsNum: float32(wordsNum),
+							Words:    useWords,
+							Delete:   true,
 						}
 
 						//删除持久层索引记录
-						e.sworker.Srequest <- &storage.StorageRequest {
-							DocId    : docId,
-							DocType  : docType,
-							Content  : content,
-							WordsNum : float32(wordsNum),
-							Words    : useWords,
-							Delete   : true,
+						e.sworker.Srequest <- &storage.StorageRequest{
+							DocId:    docId,
+							DocType:  docType,
+							Content:  content,
+							WordsNum: float32(wordsNum),
+							Words:    useWords,
+							Delete:   true,
 						}
 					}
 				}
@@ -192,7 +192,7 @@ func (e *Engine) DelIndexDoc(docId, docType int, content string) {
 	}
 }
 
-//刷新索引，把新建的索引加入到持久层
+// FlushIndex 刷新索引，把新建的索引加入到持久层
 func (e *Engine) FlushIndex() {
 	if !e.inited {
 		log.Fatal("搜索引擎必须初始化")
@@ -228,7 +228,7 @@ func (e *Engine) FlushIndex() {
 	}()
 }
 
-//搜索
+// NSearch 搜索
 func (e *Engine) NSearch(query string, mode, page, limit int, retCall RetCall) {
 	if !e.inited {
 		log.Fatal("搜索引擎必须初始化")
@@ -241,26 +241,26 @@ func (e *Engine) NSearch(query string, mode, page, limit int, retCall RetCall) {
 	}
 
 	//搜索查询请求
-	queryReq := &QueryRequest {
-		query   : query,
-		retCall : retCall,
+	queryReq := &QueryRequest{
+		query:   query,
+		retCall: retCall,
 	}
 
 	//分词请求
-	e.pworker.Request <- &parter.PaterRequest {
-		ParterMode : constant.PART_MODE_TWO,
-		ParterType : constant.PARTER_TYPE_TWO,
-		ParterTag  : "0",
-		Content    : queryReq.query,
-		QResult    : func(ret []byte) (interface{}, error) {
-			fmt.Println("search part words", string(ret))
+	e.pworker.Request <- &parter.PaterRequest{
+		ParterMode: constant.PART_MODE_TWO,
+		ParterType: constant.PARTER_TYPE_TWO,
+		ParterTag:  "0",
+		Content:    queryReq.query,
+		QResult: func(ret []byte) (interface{}, error) {
+			fmt.Println("search part words: ", string(ret))
 			if len(ret) > 0 {
 				words := strings.Split(string(ret), "|")
 				wordsNum := len(words)
 				if wordsNum > 0 {
 					var (
-						qid             uint64
-						useWords        []string
+						qid      uint64
+						useWords []string
 					)
 					wordsRecords := make(map[string][]byte)
 					for _, word := range words {
@@ -275,18 +275,18 @@ func (e *Engine) NSearch(query string, mode, page, limit int, retCall RetCall) {
 					}
 
 					qid = utils.GetKeysId(useWords...)
-					e.iworker.Srequest <- &indexer.SearchRequest {
-						QueryId      : qid,
-						Query        : query,
-						WordsNum     : float32(wordsNum),
-						Words        : useWords,
-						WordsRecords : wordsRecords,
-						Mode         : mode,
-						Page         : page,
-						Limit        : limit,
+					e.iworker.Srequest <- &indexer.SearchRequest{
+						QueryId:      qid,
+						Query:        query,
+						WordsNum:     float32(wordsNum),
+						Words:        useWords,
+						WordsRecords: wordsRecords,
+						Mode:         mode,
+						Page:         page,
+						Limit:        limit,
 					}
 
-					sresponse := <- e.iworker.Srespone
+					sresponse := <-e.iworker.Srespone
 					if sresponse.InterDocs != nil && len(sresponse.InterDocs) > 0 {
 						if sresponse != nil && qid == sresponse.QueryId {
 							e.rworker.Rank().DocAllNum = e.iworker.Index().DocAllNum
@@ -308,15 +308,15 @@ func (e *Engine) NSearch(query string, mode, page, limit int, retCall RetCall) {
 									))
 								}
 							}
-							e.rworker.Request <- &ranker.RankerRequest {
-								QueryId    : sresponse.QueryId,
-								Query      : sresponse.Query,
-								WordsNum   : sresponse.WordsNum,
-								Words      : sresponse.Words,
-								WordDocNum : sresponse.WordDocNum,
-								RankDocs   : rankDocs,
+							e.rworker.Request <- &ranker.RankerRequest{
+								QueryId:    sresponse.QueryId,
+								Query:      sresponse.Query,
+								WordsNum:   sresponse.WordsNum,
+								Words:      sresponse.Words,
+								WordDocNum: sresponse.WordDocNum,
+								RankDocs:   rankDocs,
 							}
-							rresponse := <- e.rworker.Respone
+							rresponse := <-e.rworker.Respone
 							if len(rresponse.RetDocs) != 0 {
 								//回调返回
 								return queryReq.retCall(rresponse.RetDocs)

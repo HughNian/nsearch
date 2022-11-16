@@ -4,7 +4,6 @@ import (
 	cli "github.com/HughNian/nmid/pkg/client"
 	"github.com/HughNian/nmid/pkg/model"
 	"github.com/vmihailenco/msgpack"
-	"io"
 	"log"
 	"nsearch/constant"
 	"strings"
@@ -16,20 +15,20 @@ const MAX_CONTENT_SIZE = 512
 // 分词器工作协程
 var (
 	Parter *ParterWorker
-	Client *cli.Client
+
 	once   sync.Once
+	Client *cli.Client
+	err    error
 )
 
-// 索引分词结果
+// PaterResult 索引分词结果
 type PaterResult func(data []byte) (interface{}, error)
 
-// 查询分词结果
+// QueryPaterResult 查询分词结果
 type QueryPaterResult func(data []byte) (interface{}, error)
 
 type ParterWorker struct {
-	inited      bool
-	nmidSerAddr string
-	Request     chan *PaterRequest
+	Request chan *PaterRequest
 }
 
 type PaterRequest struct {
@@ -47,31 +46,20 @@ type PaterRequest struct {
 
 // 单实列连接，适合长连接
 func getClient() *cli.Client {
-	serverAddr := constant.NPW_NMID_SERVER_HOST + ":" + constant.NPW_NMID_SERVER_PORT
-	Client, err := cli.NewClient("tcp", serverAddr)
-	if nil == Client || err != nil {
-		log.Println(err)
-	}
-
-	Client.ErrHandler = func(e error) {
-		if model.RESTIMEOUT == e {
-			Parter.inited = false
-			Parter = nil
-		} else if io.EOF == e {
-			Parter.inited = false
-			Parter = nil
+	once.Do(func() {
+		serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
+		Client, err = cli.NewClient("tcp", serverAddr)
+		if nil == Client || err != nil {
+			log.Println(err)
 		}
-	}
+	})
 
 	return Client
 }
 
 func NewParterWorker() *ParterWorker {
-	serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
 	Parter = &ParterWorker{
-		inited:      true,
-		nmidSerAddr: serverAddr,
-		Request:     make(chan *PaterRequest, constant.CHAN_SIZE),
+		Request: make(chan *PaterRequest, constant.CHAN_SIZE),
 	}
 
 	return Parter
@@ -128,7 +116,7 @@ func (pr *PaterRequest) QRespHandler(resp *cli.Response) {
 }
 
 func (pr *PaterRequest) PartWords(mode, text, tag string) error {
-	Client = getClient()
+	client := getClient()
 
 	ptext := make(map[string]interface{})
 	ptext["text"] = text
@@ -136,9 +124,9 @@ func (pr *PaterRequest) PartWords(mode, text, tag string) error {
 	params, err := msgpack.Marshal(&ptext)
 	if err == nil {
 		if pr.ParterType == constant.PARTER_TYPE_ONE {
-			return Client.Do(mode, params, pr.RespHandler)
+			return client.Do(mode, params, pr.RespHandler)
 		} else if pr.ParterType == constant.PARTER_TYPE_TWO {
-			return Client.Do(mode, params, pr.QRespHandler)
+			return client.Do(mode, params, pr.QRespHandler)
 		}
 	}
 

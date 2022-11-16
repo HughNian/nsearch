@@ -17,7 +17,7 @@ const (
 	NMID_SERVER_PORT = "6808"
 )
 
-// npw集群地址
+// npw（服务/集群）地址
 const (
 	NPW_NMID_SERVER_HOST = "192.168.64.6"
 	NPW_NMID_SERVER_PORT = "30688"
