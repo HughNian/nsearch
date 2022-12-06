@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	wor "github.com/HughNian/nmid/pkg/worker"
 	"log"
 	"nsearch/constant"
 	"nsearch/include"
@@ -72,7 +73,7 @@ func NewEngine() *Engine {
 }
 
 // IndexDoc 把内容加入索引
-func (e *Engine) IndexDoc(docId, docType int, content string) {
+func (e *Engine) IndexDoc(job wor.Job, docId, docType int, content string) {
 	if !e.inited {
 		fmt.Println("搜索引擎必须初始化")
 		return
@@ -85,6 +86,7 @@ func (e *Engine) IndexDoc(docId, docType int, content string) {
 
 	//分词请求
 	e.pworker.Request <- &parter.PaterRequest{
+		Job:        job,
 		ParterMode: constant.PART_MODE_TWO,
 		ParterType: constant.PARTER_TYPE_ONE,
 		ParterTag:  "2", //这里不能为"0"
@@ -127,7 +129,7 @@ func (e *Engine) IndexDoc(docId, docType int, content string) {
 }
 
 // DelIndexDoc 删除内容的索引
-func (e *Engine) DelIndexDoc(docId, docType int, content string) {
+func (e *Engine) DelIndexDoc(job wor.Job, docId, docType int, content string) {
 	if !e.inited {
 		fmt.Println("搜索引擎必须初始化")
 		return
@@ -140,6 +142,7 @@ func (e *Engine) DelIndexDoc(docId, docType int, content string) {
 
 	//分词请求
 	e.pworker.Request <- &parter.PaterRequest{
+		Job:        job,
 		ParterMode: constant.PART_MODE_TWO,
 		ParterType: constant.PARTER_TYPE_ONE,
 		ParterTag:  "2",
@@ -229,7 +232,7 @@ func (e *Engine) FlushIndex() {
 }
 
 // NSearch 搜索
-func (e *Engine) NSearch(query string, mode, page, limit int, retCall RetCall) {
+func (e *Engine) NSearch(job wor.Job, query string, mode, page, limit int, retCall RetCall) {
 	if !e.inited {
 		log.Fatal("搜索引擎必须初始化")
 		return
@@ -248,6 +251,7 @@ func (e *Engine) NSearch(query string, mode, page, limit int, retCall RetCall) {
 
 	//分词请求
 	e.pworker.Request <- &parter.PaterRequest{
+		Job:        job,
 		ParterMode: constant.PART_MODE_TWO,
 		ParterType: constant.PARTER_TYPE_TWO,
 		ParterTag:  "0",

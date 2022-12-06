@@ -26,7 +26,7 @@ func IndexDocment(job wor.Job) ([]byte, error) {
 	docTypeStr := resp.ParamsMap["docType"].(string)
 	docType, _ := strconv.ParseInt(docTypeStr, 10, 64)
 	content := resp.ParamsMap["content"].(string)
-	sengine.IndexDoc(int(docId), int(docType), content)
+	sengine.IndexDoc(job, int(docId), int(docType), content)
 
 	retStruct := model.GetRetStruct()
 	retStruct.Msg = "add index ok"
@@ -53,7 +53,7 @@ func DelIndexDocment(job wor.Job) ([]byte, error) {
 	docTypeStr := resp.ParamsMap["docType"].(string)
 	docType, _ := strconv.ParseInt(docTypeStr, 10, 64)
 	content := resp.ParamsMap["content"].(string)
-	sengine.DelIndexDoc(int(docId), int(docType), content)
+	sengine.DelIndexDoc(job, int(docId), int(docType), content)
 
 	retStruct := model.GetRetStruct()
 	retStruct.Msg = "del index ok"
@@ -84,7 +84,7 @@ func NSearch(job wor.Job) ([]byte, error) {
 	limitStr := resp.ParamsMap["limit"].(string)
 	limit, _ := strconv.ParseInt(limitStr, 10, 64)
 	retStruct := model.GetRetStruct()
-	sengine.NSearch(query, int(mode), int(page), int(limit), func(result []*include.RetDocument) (ret []byte, err error) {
+	sengine.NSearch(job, query, int(mode), int(page), int(limit), func(result []*include.RetDocument) (ret []byte, err error) {
 		if result != nil && len(result) != 0 {
 			data, err := json.Marshal(result)
 			if err == nil {
@@ -147,10 +147,11 @@ func FlushIndex(job wor.Job) ([]byte, error) {
 func main() {
 	showLogo()
 
+	var workerName = "nsearch"
 	var worker *wor.Worker
 	var err error
 	serverAddr := constant.NMID_SERVER_HOST + ":" + constant.NMID_SERVER_PORT
-	worker = wor.NewWorker()
+	worker = wor.NewWorker().SetWorkerName(workerName).WithTrace(constant.SkyWalkingTraceOapUrl)
 	err = worker.AddServer("tcp", serverAddr)
 	if err != nil {
 		log.Fatalln(err)

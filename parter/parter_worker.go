@@ -3,6 +3,7 @@ package parter
 import (
 	cli "github.com/HughNian/nmid/pkg/client"
 	"github.com/HughNian/nmid/pkg/model"
+	wor "github.com/HughNian/nmid/pkg/worker"
 	"github.com/vmihailenco/msgpack"
 	"log"
 	"nsearch/constant"
@@ -32,6 +33,8 @@ type ParterWorker struct {
 }
 
 type PaterRequest struct {
+	Job wor.Job
+
 	ParterMode string //分词模式
 	ParterType int    //分词请求类型: 1-文档分词，2-query查询分词
 	ParterTag  string //分词信息展示: "0"-不展示,"1"-显示词的词性,"2"-显示词的词频、distance
@@ -45,17 +48,17 @@ type PaterRequest struct {
 }
 
 // 单实列连接，适合长连接
-func getClient() *cli.Client {
-	once.Do(func() {
-		serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
-		Client, err = cli.NewClient("tcp", serverAddr)
-		if nil == Client || err != nil {
-			log.Println(err)
-		}
-	})
-
-	return Client
-}
+//func getClient() *cli.Client {
+//	once.Do(func() {
+//		serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
+//		Client, err = cli.NewClient("tcp", serverAddr)
+//		if nil == Client || err != nil {
+//			log.Println(err)
+//		}
+//	})
+//
+//	return Client
+//}
 
 func NewParterWorker() *ParterWorker {
 	Parter = &ParterWorker{
@@ -115,18 +118,22 @@ func (pr *PaterRequest) QRespHandler(resp *cli.Response) {
 	}
 }
 
-func (pr *PaterRequest) PartWords(mode, text, tag string) error {
-	client := getClient()
+func (pr *PaterRequest) PartWords(job wor.Job, mode, text, tag string) error {
+	//client := getClient()
+
+	serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
 
 	ptext := make(map[string]interface{})
 	ptext["text"] = text
 	ptext["p2"] = tag
-	params, err := msgpack.Marshal(&ptext)
+	//params, err := msgpack.Marshal(&ptext)
 	if err == nil {
 		if pr.ParterType == constant.PARTER_TYPE_ONE {
-			return client.Do(mode, params, pr.RespHandler)
+			//return client.Do(mode, params, pr.RespHandler)
+			job.ClientCall(serverAddr, mode, ptext, pr.RespHandler)
 		} else if pr.ParterType == constant.PARTER_TYPE_TWO {
-			return client.Do(mode, params, pr.QRespHandler)
+			//return client.Do(mode, params, pr.QRespHandler)
+			job.ClientCall(serverAddr, mode, ptext, pr.QRespHandler)
 		}
 	}
 
@@ -155,10 +162,10 @@ func (pw *ParterWorker) DoParter() {
 							end = clen
 						}
 
-						request.PartWords(request.ParterMode, string(crune[start:end]), string(request.ParterTag))
+						request.PartWords(request.Job, request.ParterMode, string(crune[start:end]), string(request.ParterTag))
 					}
 				} else {
-					request.PartWords(request.ParterMode, request.Content, string(request.ParterTag))
+					request.PartWords(request.Job, request.ParterMode, request.Content, string(request.ParterTag))
 				}
 			}
 
@@ -169,7 +176,7 @@ func (pw *ParterWorker) DoParter() {
 				}
 
 				if len(request.Content) > 0 {
-					request.PartWords(request.ParterMode, request.Content, string(request.ParterTag))
+					request.PartWords(request.Job, request.ParterMode, request.Content, string(request.ParterTag))
 				}
 			}
 		}
