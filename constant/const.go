@@ -19,8 +19,8 @@ const (
 
 // npw（服务/集群）地址
 const (
-	NPW_NMID_SERVER_HOST = "127.0.0.1" //"192.168.64.6"
-	NPW_NMID_SERVER_PORT = "6808"      //"30688"
+	NPW_NMID_SERVER_HOST = "192.168.64.6"
+	NPW_NMID_SERVER_PORT = "30688"
 )
 
 // SkyWalkingTraceOapUrl skywalking oap report url
