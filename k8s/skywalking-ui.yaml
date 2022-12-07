@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-deployment
+  namespace: skywalking
+  labels:
+    app: ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ui
+  template:
+    metadata:
+      labels:
+        app: ui
+    spec:
+      nodeSelector:
+       nodetype: wedesign
+      containers:
+        - name: ui
+          image: apache/skywalking-ui:8.9.0
+          ports:
+            - containerPort: 8080
+              name: page
+          env:
+            - name: SW_OAP_ADDRESS
+              value: http://oap:12800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui
+  namespace: skywalking
+  labels:
+    service: ui
+spec:
+  ports:
+    - name: page
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: ui
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    field.cattle.io/description: skywalking-ui
+  name: skywalking-ui
+  namespace: skywalking
+spec:
+  defaultBackend:
+    service:
+      name: ui
+      port:
+        number: 8080
+  rules:
+    - host: skyui.mytest.com #使用自己相应域名
+      http:
+        paths:
+          - backend:
+              service:
+                name: ui
+                port:
+                  number: 8080
+            path: /
+            pathType: Prefix     

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: nmid-sidecar #使用nmid作为nsearch服务sidecar
-          image: docker.io/hughnian/nmid:20 #这里的tag根据具体镜像tag取值
+          image: docker.io/hughnian/nmid:56 #这里的tag根据具体镜像tag取值
           command: ["/etc/service/run"]
           ports:
             - name: tcp
@@ -25,7 +25,7 @@ spec:
             - name: http
               containerPort: 6809
         - name: nsearch
-          image: docker.io/hughnian/nsearch:1 #这里的tag根据具体镜像tag取值
+          image: docker.io/hughnian/nsearch:5 #这里的tag根据具体镜像tag取值
           command: ["/etc/service/run"]
 ---
 apiVersion: v1

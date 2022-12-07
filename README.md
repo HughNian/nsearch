@@ -24,6 +24,13 @@ nsearch作为搜索服务的话，也是基于nmid作为worker端。本系统采
    
 2.搜索你需要的结果，具体的使用参考client目录中的代码。  
 
+## k8s使用  
+在k8s目录中有k8s部署文件，在k8s集群中执行`sudo kubectl apply -f deployment.yaml`，使用nmid镜像#56，nsearch镜像#5，支持链路追踪。   
+在k8s部署skywalking，在k8s集群中执行 `sudo kubectl apply -f skywalking-oap.yaml`，`sudo kubectl apply -f skywalking-ui.yaml`  
+<div align="center">
+    <img src="https://raw.githubusercontent.com/HughNian/nsearch/master/trace.png" alt="trace">
+</div>
+
 ## 示例
 ```go
 //golang调用示例
