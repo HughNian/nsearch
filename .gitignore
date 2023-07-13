@@ -1,3 +1,7 @@
 nsearch.bolt
 /search
 /client/client
+/Make.bat
+/npwserver.exe
+/nsearch.bolt.lock
+/log_dir

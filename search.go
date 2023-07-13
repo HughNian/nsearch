@@ -3,14 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/HughNian/nmid/pkg/model"
-	wor "github.com/HughNian/nmid/pkg/worker"
-	"github.com/vmihailenco/msgpack"
 	"log"
 	"nsearch/constant"
 	"nsearch/engine"
 	"nsearch/include"
 	"strconv"
+
+	"github.com/HughNian/nmid/pkg/model"
+	wor "github.com/HughNian/nmid/pkg/worker"
+	"github.com/vmihailenco/msgpack"
 )
 
 var sengine *engine.Engine
@@ -151,7 +152,8 @@ func main() {
 	var worker *wor.Worker
 	var err error
 	serverAddr := constant.NMID_SERVER_HOST + ":" + constant.NMID_SERVER_PORT
-	worker = wor.NewWorker().SetWorkerName(workerName).WithTrace(constant.SkyWalkingTraceOapUrl)
+	// worker = wor.NewWorker().SetWorkerName(workerName).WithTrace(constant.SkyWalkingTraceOapUrl)
+	worker = wor.NewWorker().SetWorkerName(workerName)
 	err = worker.AddServer("tcp", serverAddr)
 	if err != nil {
 		log.Fatalln(err)

@@ -1,14 +1,15 @@
 package parter
 
 import (
-	cli "github.com/HughNian/nmid/pkg/client"
-	"github.com/HughNian/nmid/pkg/model"
-	wor "github.com/HughNian/nmid/pkg/worker"
-	"github.com/vmihailenco/msgpack"
 	"log"
 	"nsearch/constant"
 	"strings"
 	"sync"
+
+	cli "github.com/HughNian/nmid/pkg/client"
+	"github.com/HughNian/nmid/pkg/model"
+	wor "github.com/HughNian/nmid/pkg/worker"
+	"github.com/vmihailenco/msgpack"
 )
 
 const MAX_CONTENT_SIZE = 512

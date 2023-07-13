@@ -3,30 +3,28 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	cli "github.com/HughNian/nmid/pkg/client"
-	"github.com/HughNian/nmid/pkg/model"
-	"github.com/vmihailenco/msgpack"
 	"log"
 	"os"
 	"sync"
+
+	cli "github.com/HughNian/nmid/pkg/client"
+	"github.com/HughNian/nmid/pkg/model"
+	"github.com/vmihailenco/msgpack"
 )
 
 var once sync.Once
 var client *cli.Client
 var err error
 
-const NMIDSERVERHOST = "192.168.64.6" //"127.0.0.1"
-const NMIDSERVERPORT = "30690"        //"6808"
+const NMIDSERVERHOST = "127.0.0.1"
+const NMIDSERVERPORT = "6808"
 
-// 单实列连接，适合长连接
 func getClient() *cli.Client {
-	once.Do(func() {
-		serverAddr := NMIDSERVERHOST + ":" + NMIDSERVERPORT
-		client, err = cli.NewClient("tcp", serverAddr)
-		if nil == client || err != nil {
-			log.Println(err)
-		}
-	})
+	serverAddr := NMIDSERVERHOST + ":" + NMIDSERVERPORT
+	client, err = cli.NewClient("tcp", serverAddr).Start()
+	if nil == client || err != nil {
+		log.Println(err)
+	}
 
 	return client
 }
