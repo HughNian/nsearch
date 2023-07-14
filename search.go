@@ -7,8 +7,12 @@ import (
 	"nsearch/constant"
 	"nsearch/engine"
 	"nsearch/include"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
+	"github.com/HughNian/nmid/pkg/logger"
 	"github.com/HughNian/nmid/pkg/model"
 	wor "github.com/HughNian/nmid/pkg/worker"
 	"github.com/vmihailenco/msgpack"
@@ -175,7 +179,14 @@ func main() {
 		return
 	}
 
-	worker.WorkerDo()
+	go worker.WorkerDo()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	s := <-c
+	logger.Infof("Server Exit: %s", s.String())
+	worker.WorkerClose()
 }
 
 func showLogo() {
