@@ -5,3 +5,5 @@ nsearch.bolt
 /npwserver.exe
 /nsearch.bolt.lock
 /log_dir
+/nsearch
+/nsearch.exe

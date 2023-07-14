@@ -1,9 +1,9 @@
 BINPATH=./
-BINNAME=npwserver
+BINNAME=nsearch
 
 ifeq ($(OS),Windows_NT)
 	PLATFORM=windows
-	BINNAME=npwserver.exe
+	BINNAME=nsearch.exe
 else
 	ifeq ($(shell uname),Darwin)
 		PLATFORM=darwin
