@@ -7,3 +7,5 @@ nsearch.bolt
 /log_dir
 /nsearch
 /nsearch.exe
+/nsearch.service
+/*.env

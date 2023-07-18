@@ -35,6 +35,7 @@ func main() {
 
 	client = getClient()
 	client.SetParamsType(model.PARAMS_TYPE_JSON)
+	defer client.Close()
 
 	client.ErrHandler = func(e error) {
 		if model.RESTIMEOUT == e {

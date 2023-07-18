@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	wor "github.com/HughNian/nmid/pkg/worker"
 	"log"
 	"nsearch/constant"
 	"nsearch/include"
@@ -15,6 +14,9 @@ import (
 	"nsearch/utils"
 	"strings"
 	"sync"
+
+	"github.com/HughNian/nmid/pkg/logger"
+	wor "github.com/HughNian/nmid/pkg/worker"
 )
 
 var (
@@ -333,7 +335,10 @@ func (e *Engine) NSearch(job wor.Job, query string, mode, page, limit int, retCa
 				}
 			}
 
-			return nil, nil
+			logger.Info("npartword ret empty")
+			empty := make([]*include.RetDocument, 0)
+			return queryReq.retCall(empty)
+			// return nil, nil
 		},
 	}
 

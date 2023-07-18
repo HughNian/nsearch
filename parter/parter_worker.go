@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	cli "github.com/HughNian/nmid/pkg/client"
+	"github.com/HughNian/nmid/pkg/logger"
 	"github.com/HughNian/nmid/pkg/model"
 	wor "github.com/HughNian/nmid/pkg/worker"
 	"github.com/vmihailenco/msgpack"
@@ -48,18 +49,15 @@ type PaterRequest struct {
 	QResult QueryPaterResult
 }
 
-// 单实列连接，适合长连接
-//func getClient() *cli.Client {
-//	once.Do(func() {
-//		serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
-//		Client, err = cli.NewClient("tcp", serverAddr)
-//		if nil == Client || err != nil {
-//			log.Println(err)
-//		}
-//	})
-//
-//	return Client
-//}
+func getClient() *cli.Client {
+	serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
+	Client, err = cli.NewClient("tcp", serverAddr).Start()
+	if nil == Client || err != nil {
+		log.Println(err)
+	}
+
+	return Client
+}
 
 func NewParterWorker() *ParterWorker {
 	Parter = &ParterWorker{
@@ -120,21 +118,46 @@ func (pr *PaterRequest) QRespHandler(resp *cli.Response) {
 }
 
 func (pr *PaterRequest) PartWords(job wor.Job, mode, text, tag string) error {
-	//client := getClient()
+	client := getClient()
+	defer client.Close()
 
-	serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
+	// errHandler := func(e error) {
+	// 	if pr.QResult != nil {
+	// 		(pr.QResult)([]byte{})
+	// 	}
+
+	// 	if model.RESTIMEOUT == e {
+	// 		logger.Info("time out here")
+	// 	} else {
+	// 		logger.Error(e)
+	// 	}
+	// }
+
+	client.ErrHandler = func(e error) {
+		if pr.QResult != nil {
+			(pr.QResult)([]byte{})
+		}
+
+		if model.RESTIMEOUT == e {
+			logger.Info("time out here")
+		} else {
+			logger.Error(e)
+		}
+	}
+
+	//serverAddr := strings.Join([]string{constant.NPW_NMID_SERVER_HOST, constant.NPW_NMID_SERVER_PORT}, ":")
 
 	ptext := make(map[string]interface{})
 	ptext["text"] = text
 	ptext["p2"] = tag
-	//params, err := msgpack.Marshal(&ptext)
+	params, err := msgpack.Marshal(&ptext)
 	if err == nil {
 		if pr.ParterType == constant.PARTER_TYPE_ONE {
-			//return client.Do(mode, params, pr.RespHandler)
-			job.ClientCall(serverAddr, mode, ptext, pr.RespHandler)
+			return client.Do(mode, params, pr.RespHandler)
+			// job.ClientCall(serverAddr, mode, ptext, pr.RespHandler, errHandler)
 		} else if pr.ParterType == constant.PARTER_TYPE_TWO {
-			//return client.Do(mode, params, pr.QRespHandler)
-			job.ClientCall(serverAddr, mode, ptext, pr.QRespHandler)
+			return client.Do(mode, params, pr.QRespHandler)
+			// job.ClientCall(serverAddr, mode, ptext, pr.QRespHandler, errHandler)
 		}
 	}
 
