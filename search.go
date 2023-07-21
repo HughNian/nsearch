@@ -93,9 +93,9 @@ func NSearch(job wor.Job) ([]byte, error) {
 		if result != nil && len(result) != 0 {
 			data, err := json.Marshal(result)
 			if err == nil {
-				fmt.Println("search data:", string(data))
+				logger.Infof("search data: %s", string(data))
 			} else {
-				log.Println(err)
+				logger.Error(err)
 			}
 
 			retStruct.Msg = "ok"
