@@ -1,5 +1,5 @@
 <div align="center">
-    <a href="http://www.niansong.top"><img src="https://raw.githubusercontent.com/HughNian/nsearch/master/nsearch_logo.png" alt="nsearch logo" width="360"></a>
+    <a href="http://www.niansong.top"><img src="https://github.com/HughNian/nsearch/blob/master/nsearch_logo-removebg.png?raw=true" alt="nsearch logo" width="360"></a>
 </div>
 
 ## nsearch全文搜索引擎系统
