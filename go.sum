@@ -732,6 +732,8 @@ github.com/DataDog/zstd v1.4.1/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t
 github.com/HdrHistogram/hdrhistogram-go v1.0.1/go.mod h1:BWJ+nMSHY3L41Zj7CA3uXnloDp7xxV0YvstAE7nKTaM=
 github.com/HughNian/nmid v1.0.10 h1:b04YmHE+zjs5o5t1ojF3gKbOpVcsW3dJ8tPQ9u74ZrA=
 github.com/HughNian/nmid v1.0.10/go.mod h1:DdjM00v+PtEe3ztWEHrf+WQS50jkinqgOD56B16jPKI=
+github.com/HughNian/nmid v1.0.12 h1:Nqx1V6blnvm0IixdQN4y+UWGcKo84UvUFkP94SyJLrA=
+github.com/HughNian/nmid v1.0.12/go.mod h1:DdjM00v+PtEe3ztWEHrf+WQS50jkinqgOD56B16jPKI=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/Microsoft/go-winio v0.5.0/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
