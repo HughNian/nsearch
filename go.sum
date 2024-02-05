@@ -725,6 +725,8 @@ github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798/go.mod h1:1jcaCB/uf
 github.com/HdrHistogram/hdrhistogram-go v1.0.1/go.mod h1:BWJ+nMSHY3L41Zj7CA3uXnloDp7xxV0YvstAE7nKTaM=
 github.com/HughNian/nmid v1.0.15 h1:xSiyI+bY+mN1ZhM6MhZ0J0rCwz3f6nYmOXSqQ0E95vE=
 github.com/HughNian/nmid v1.0.15/go.mod h1:CZM830Qd8K8nZGui16dSgmy9Jl+pAo/2M+7mYkyh1tw=
+github.com/HughNian/nmid v1.0.16 h1:dyG85gPFsSD8znjhp2Pp5nGY/4md9y7kwVABLHXThbY=
+github.com/HughNian/nmid v1.0.16/go.mod h1:CZM830Qd8K8nZGui16dSgmy9Jl+pAo/2M+7mYkyh1tw=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
